@@ -1,0 +1,15 @@
+{
+  "name": "review-powers",
+  "description": "Skills that turn AI code reviews into decision reports.",
+  "owner": {
+    "name": "jcesarperez",
+    "url": "https://github.com/jcesarperez"
+  },
+  "plugins": [
+    {
+      "name": "review-powers",
+      "source": "./",
+      "description": "Skills that turn AI code reviews into decision reports. You review the review, then decide."
+    }
+  ]
+}

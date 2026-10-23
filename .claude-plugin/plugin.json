@@ -1,0 +1,13 @@
+{
+  "name": "review-powers",
+  "version": "1.0.0",
+  "description": "Skills that turn AI code reviews into decision reports. You review the review, then decide.",
+  "author": {
+    "name": "jcesarperez",
+    "url": "https://github.com/jcesarperez"
+  },
+  "homepage": "https://github.com/jcesarperez/review-powers",
+  "repository": "https://github.com/jcesarperez/review-powers",
+  "license": "MIT",
+  "keywords": ["code-review", "pull-request", "skills", "github"]
+}
