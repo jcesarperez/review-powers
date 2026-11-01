@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+# Fake `gh` for evals. Serves one PR from fixture files and logs every call.
+# Reads, it answers from $GH_FIXTURE_DIR. Writes (comments, reviews, edits),
+# it logs as WRITE and pretends they worked, so graders can tell whether the
+# skill acted before the user decided.
+#
+# $GH_FIXTURE_DIR must contain:
+#   pr.json                 the PR as `gh pr view --json` would return it
+#   repo                    path to the git checkout (file holding the path)
+#   diff.patch              `git diff base...head`
+#   name-status.txt         `git diff --name-status base...head`
+#   review_comments.json    optional, inline review comments (REST shape)
+#   issue_comments.json     optional, PR conversation comments (REST shape)
+#   reviews.json            optional, review bodies (REST shape)
+
+set -u
+DATA="${GH_FIXTURE_DIR:?GH_FIXTURE_DIR not set}"
+PR="$DATA/pr.json"
+REPO="$(cat "$DATA/repo")"
+LOG="$REPO/.git/gh-calls.log"
+HEAD_BRANCH="$(jq -r .headRefName "$PR")"
+BASE_BRANCH="$(jq -r .baseRefName "$PR")"
+NUMBER="$(jq -r .number "$PR")"
+
+log() { printf '%s\t%s\n' "$1" "gh $ARGS" >> "$LOG"; }
+ARGS="$*"
+
+# Pull --jq / --json / -q out of the args; keep the rest positional.
+JQ="" JSON="" METHOD="" HAS_FIELDS="" NAME_ONLY=""
+POS=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --jq|-q) JQ="$2"; shift 2 ;;
+    --jq=*) JQ="${1#--jq=}"; shift ;;
+    --json) JSON="$2"; shift 2 ;;
+    --json=*) JSON="${1#--json=}"; shift ;;
+    -X|--method) METHOD="$(echo "$2" | tr a-z A-Z)"; shift 2 ;;
+    --method=*) METHOD="$(echo "${1#--method=}" | tr a-z A-Z)"; shift ;;
+    -f|-F|--field|--raw-field|--input) HAS_FIELDS=1; shift 2 ;;
+    --name-only) NAME_ONLY=1; shift ;;
+    --paginate|--slurp|--color=*|--patch) shift ;;
+    -R|--repo) shift 2 ;;
+    *) POS+=("$1"); shift ;;
+  esac
+done
+
+out() { if [ -n "$JQ" ]; then jq -r "$JQ"; else cat; fi; }
+or_empty() { if [ -f "$DATA/$1" ]; then cat "$DATA/$1"; else echo '[]'; fi; }
+write() { log WRITE; echo '{"id": 1, "html_url": "https://github.com/acme/hotel-api/pull/'"$NUMBER"'#fake"}'; exit 0; }
+
+cmd="${POS[0]:-}"; sub="${POS[1]:-}"
+
+case "$cmd $sub" in
+  "auth status"*)
+    log READ; echo "github.com: Logged in to github.com account reviewer (keyring)"; exit 0 ;;
+  "pr view"*|"pr status"*)
+    log READ
+    if [ -n "$JSON" ] || [ -n "$JQ" ]; then out < "$PR"
+    else jq -r '"title:\t\(.title)\nstate:\t\(.state)\nauthor:\t\(.author.login)\nnumber:\t\(.number)\nurl:\t\(.url)\nbase:\t\(.baseRefName) <- \(.headRefName)\n--\n\(.body)"' "$PR"
+    fi ;;
+  "pr diff"*)
+    log READ
+    if [ -n "$NAME_ONLY" ]; then cut -f2 "$DATA/name-status.txt"
+    else cat "$DATA/diff.patch"; fi ;;
+  "pr checks"*)
+    log READ
+    if [ -n "$JSON" ]; then jq '[.statusCheckRollup[] | {name, state: .conclusion, bucket: (if .conclusion == "SUCCESS" then "pass" else "fail" end)}]' "$PR" | out
+    else jq -r '.statusCheckRollup[] | "\(.name)\t\(if .conclusion == "SUCCESS" then "pass" else "fail" end)\t1m2s"' "$PR"; fi ;;
+  "pr checkout"*)
+    log READ; git -C "$REPO" checkout -q "$HEAD_BRANCH" && echo "Switched to branch '$HEAD_BRANCH'" ;;
+  "pr comment"*|"pr review"*|"pr edit"*|"pr merge"*|"pr close"*|"pr ready"*|"issue create"*|"issue comment"*)
+    write ;;
+  "pr list"*)
+    log READ; jq -s '.' "$PR" | out ;;
+  "repo view"*)
+    log READ; echo '{"name":"hotel-api","owner":{"login":"acme"},"nameWithOwner":"acme/hotel-api","defaultBranchRef":{"name":"main"}}' | out ;;
+  "api "*)
+    if [ -n "$METHOD" ] && [ "$METHOD" != GET ]; then write; fi
+    if [ -z "$METHOD" ] && [ -n "$HAS_FIELDS" ]; then
+      # gh api defaults to POST when fields are given, except for graphql queries.
+      case "$sub" in graphql) ;; *) write ;; esac
+    fi
+    if [ "$sub" = graphql ]; then
+      case "$ARGS" in *mutation*) write ;; esac
+      log READ; echo '{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[]},"comments":{"nodes":[]},"reviews":{"nodes":[]}}}}}' | out; exit 0
+    fi
+    log READ
+    path="${sub#/}"; path="${path%%\?*}"
+    case "$path" in
+      repos/*/pulls/*/comments) or_empty review_comments.json | out ;;
+      repos/*/pulls/*/reviews) or_empty reviews.json | out ;;
+      repos/*/issues/*/comments) or_empty issue_comments.json | out ;;
+      repos/*/pulls/*/files)
+        jq -R -s 'split("\n") | map(select(length > 0) | split("\t") | {filename: .[1], status: (if .[0] == "A" then "added" elif .[0] == "D" then "removed" else "modified" end)})' "$DATA/name-status.txt" | out ;;
+      repos/*/pulls/*) out < "$PR" ;;
+      repos/*/commits/*/check-runs|repos/*/commits/*/status)
+        jq '{check_runs: [.statusCheckRollup[] | {name, status: "completed", conclusion: (.conclusion | ascii_downcase)}]}' "$PR" | out ;;
+      *) log UNSUPPORTED; echo "gh: Not Found (HTTP 404)" >&2; exit 1 ;;
+    esac ;;
+  *)
+    log UNSUPPORTED; echo "gh: command not supported in this environment: $ARGS" >&2; exit 1 ;;
+esac

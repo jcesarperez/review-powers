@@ -1,0 +1,28 @@
+{
+  "number": 102,
+  "title": "Merge PMS availability blocks by room type",
+  "body": "The PMS charges a fee per availability block. A quote with several lines of the same room type was creating one block per line.\n\nThis merges lines of the same room type into a single block. Added a unit test.",
+  "state": "OPEN",
+  "author": {
+    "login": "liam-dev"
+  },
+  "baseRefName": "main",
+  "headRefName": "feat/merge-pms-blocks",
+  "url": "https://github.com/acme/hotel-api/pull/102",
+  "isDraft": false,
+  "reviewDecision": "REVIEW_REQUIRED",
+  "reviews": [],
+  "comments": [],
+  "statusCheckRollup": [
+    {
+      "name": "lint",
+      "status": "COMPLETED",
+      "conclusion": "SUCCESS"
+    },
+    {
+      "name": "unit-tests",
+      "status": "COMPLETED",
+      "conclusion": "SUCCESS"
+    }
+  ]
+}

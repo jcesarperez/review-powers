@@ -1,0 +1,5 @@
+schema_version: "1.1"
+name: review-pr-explain-contract-change
+tags: [review-pr, explain]
+context:
+  scaffold_script: scaffold.sh

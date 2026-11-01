@@ -1,0 +1,28 @@
+{
+  "number": 101,
+  "title": "Expose accommodation blocks on the quote endpoint",
+  "body": "Quotes now expose `accommodationBlocks`, one per room line with its room-nights and amount. The total is derived from them.\n\nNew quotes no longer store `legacy_total`; the column becomes nullable and is only kept for old quotes. Clients should move to `accommodationBlocks`.\n\nNo behaviour change for existing quotes.",
+  "state": "OPEN",
+  "author": {
+    "login": "marta-dev"
+  },
+  "baseRefName": "main",
+  "headRefName": "feat/accommodation-blocks",
+  "url": "https://github.com/acme/hotel-api/pull/101",
+  "isDraft": false,
+  "reviewDecision": "REVIEW_REQUIRED",
+  "reviews": [],
+  "comments": [],
+  "statusCheckRollup": [
+    {
+      "name": "lint",
+      "status": "COMPLETED",
+      "conclusion": "SUCCESS"
+    },
+    {
+      "name": "unit-tests",
+      "status": "COMPLETED",
+      "conclusion": "SUCCESS"
+    }
+  ]
+}

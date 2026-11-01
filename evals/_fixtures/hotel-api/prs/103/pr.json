@@ -1,0 +1,28 @@
+{
+  "number": 103,
+  "title": "Load discount codes from the database",
+  "body": "Discount codes were hardcoded (`LAUNCH10` only). They now live in a `discount_codes` table so marketing can add codes without a deploy. The migration seeds `LAUNCH10`.",
+  "state": "OPEN",
+  "author": {
+    "login": "sofia-dev"
+  },
+  "baseRefName": "main",
+  "headRefName": "feat/discount-codes-table",
+  "url": "https://github.com/acme/hotel-api/pull/103",
+  "isDraft": false,
+  "reviewDecision": "REVIEW_REQUIRED",
+  "reviews": [],
+  "comments": [],
+  "statusCheckRollup": [
+    {
+      "name": "lint",
+      "status": "COMPLETED",
+      "conclusion": "SUCCESS"
+    },
+    {
+      "name": "unit-tests",
+      "status": "COMPLETED",
+      "conclusion": "SUCCESS"
+    }
+  ]
+}
