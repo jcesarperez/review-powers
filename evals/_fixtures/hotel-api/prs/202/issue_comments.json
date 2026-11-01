@@ -1,0 +1,14 @@
+[
+  {
+    "id": 7001,
+    "user": {
+      "login": "tom-qa",
+      "type": "User"
+    },
+    "author_association": "MEMBER",
+    "body": "Question: invoices are built from the quote too (`buildInvoice`). Will a stay whose quote is older than 14 days still get invoiced? It should, the guests already stayed.",
+    "created_at": "2026-10-29T11:05:00Z",
+    "updated_at": "2026-10-29T11:05:00Z",
+    "html_url": "https://github.com/acme/hotel-api/pull/202#issuecomment-7001"
+  }
+]

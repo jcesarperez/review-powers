@@ -1,0 +1,38 @@
+[
+  {
+    "id": 9001,
+    "user": {
+      "login": "maria-k",
+      "type": "User"
+    },
+    "author_association": "MEMBER",
+    "body": "",
+    "state": "CHANGES_REQUESTED",
+    "submitted_at": "2026-10-28T09:15:00Z",
+    "html_url": "https://github.com/acme/hotel-api/pull/201#pullrequestreview-9001"
+  },
+  {
+    "id": 9002,
+    "user": {
+      "login": "liam-dev",
+      "type": "User"
+    },
+    "author_association": "MEMBER",
+    "body": "",
+    "state": "COMMENTED",
+    "submitted_at": "2026-10-28T10:03:00Z",
+    "html_url": "https://github.com/acme/hotel-api/pull/201#pullrequestreview-9002"
+  },
+  {
+    "id": 9003,
+    "user": {
+      "login": "acme-review-bot[bot]",
+      "type": "Bot"
+    },
+    "author_association": "NONE",
+    "body": "",
+    "state": "COMMENTED",
+    "submitted_at": "2026-10-28T10:31:00Z",
+    "html_url": "https://github.com/acme/hotel-api/pull/201#pullrequestreview-9003"
+  }
+]

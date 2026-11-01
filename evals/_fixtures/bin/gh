@@ -12,6 +12,10 @@
 #   review_comments.json    optional, inline review comments (REST shape)
 #   issue_comments.json     optional, PR conversation comments (REST shape)
 #   reviews.json            optional, review bodies (REST shape)
+#   viewer                  optional, the logged-in login (default: reviewer)
+#
+# The three optional comment files also feed `gh pr view --json comments,reviews`
+# and GraphQL reviewThreads/comments/reviews, so every way of reading them agrees.
 
 set -u
 DATA="${GH_FIXTURE_DIR:?GH_FIXTURE_DIR not set}"
@@ -21,6 +25,7 @@ LOG="$REPO/.git/gh-calls.log"
 HEAD_BRANCH="$(jq -r .headRefName "$PR")"
 BASE_BRANCH="$(jq -r .baseRefName "$PR")"
 NUMBER="$(jq -r .number "$PR")"
+VIEWER="$(cat "$DATA/viewer" 2>/dev/null || echo reviewer)"
 
 log() { printf '%s\t%s\n' "$1" "gh $ARGS" >> "$LOG"; }
 ARGS="$*"
@@ -46,16 +51,39 @@ done
 
 out() { if [ -n "$JQ" ]; then jq -r "$JQ"; else cat; fi; }
 or_empty() { if [ -f "$DATA/$1" ]; then cat "$DATA/$1"; else echo '[]'; fi; }
+# pr.json with comments/reviews taken from the REST files, when they exist.
+pr_json() {
+  jq --argjson ic "$(or_empty issue_comments.json)" --argjson rv "$(or_empty reviews.json)" \
+     --arg has_ic "$([ -f "$DATA/issue_comments.json" ] && echo 1)" --arg has_rv "$([ -f "$DATA/reviews.json" ] && echo 1)" '
+    (if $has_ic == "1" then .comments = [$ic[] | {id: ("IC_" + (.id|tostring)), author: {login: .user.login}, authorAssociation: .author_association, body, createdAt: .created_at, url: .html_url}] else . end)
+    | (if $has_rv == "1" then .reviews = [$rv[] | {id: ("PRR_" + (.id|tostring)), author: {login: .user.login}, authorAssociation: .author_association, body, state, submittedAt: .submitted_at}] else . end)' "$PR"
+}
+# One GraphQL answer that covers the usual PR-feedback queries; --jq picks from it.
+graphql() {
+  jq -n --arg v "$VIEWER" --argjson n "$NUMBER" --argjson rc "$(or_empty review_comments.json)" \
+     --argjson ic "$(or_empty issue_comments.json)" --argjson rv "$(or_empty reviews.json)" '
+    def page(xs): {totalCount: (xs|length), pageInfo: {hasNextPage: false, endCursor: null}, nodes: xs};
+    def who: {login: .user.login, __typename: (if .user.type == "Bot" then "Bot" else "User" end)};
+    {data: {viewer: {login: $v}, repository: {pullRequest: {number: $n,
+      reviewThreads: page([$rc[] | select(.in_reply_to_id == null) | . as $root | {
+        id: ("PRRT_" + (.id|tostring)), isResolved: false, isOutdated: false, path, line,
+        comments: page([$rc[] | select(.id == $root.id or .in_reply_to_id == $root.id) | {
+          id: ("PRRC_" + (.id|tostring)), databaseId: .id, body, path, line, author: who,
+          createdAt: .created_at, url: .html_url}])}]),
+      comments: page([$ic[] | {id: ("IC_" + (.id|tostring)), databaseId: .id, body, author: who, createdAt: .created_at, url: .html_url}]),
+      reviews: page([$rv[] | {id: ("PRR_" + (.id|tostring)), databaseId: .id, body, state, author: who, submittedAt: .submitted_at, url: .html_url}])
+    }}}}'
+}
 write() { log WRITE; echo '{"id": 1, "html_url": "https://github.com/acme/hotel-api/pull/'"$NUMBER"'#fake"}'; exit 0; }
 
 cmd="${POS[0]:-}"; sub="${POS[1]:-}"
 
 case "$cmd $sub" in
   "auth status"*)
-    log READ; echo "github.com: Logged in to github.com account reviewer (keyring)"; exit 0 ;;
+    log READ; echo "github.com: Logged in to github.com account $VIEWER (keyring)"; exit 0 ;;
   "pr view"*|"pr status"*)
     log READ
-    if [ -n "$JSON" ] || [ -n "$JQ" ]; then out < "$PR"
+    if [ -n "$JSON" ] || [ -n "$JQ" ]; then pr_json | out
     else jq -r '"title:\t\(.title)\nstate:\t\(.state)\nauthor:\t\(.author.login)\nnumber:\t\(.number)\nurl:\t\(.url)\nbase:\t\(.baseRefName) <- \(.headRefName)\n--\n\(.body)"' "$PR"
     fi ;;
   "pr diff"*)
@@ -82,17 +110,18 @@ case "$cmd $sub" in
     fi
     if [ "$sub" = graphql ]; then
       case "$ARGS" in *mutation*) write ;; esac
-      log READ; echo '{"data":{"repository":{"pullRequest":{"reviewThreads":{"nodes":[]},"comments":{"nodes":[]},"reviews":{"nodes":[]}}}}}' | out; exit 0
+      log READ; graphql | out; exit 0
     fi
     log READ
     path="${sub#/}"; path="${path%%\?*}"
     case "$path" in
+      user) jq -n --arg v "$VIEWER" '{login: $v, type: "User"}' | out ;;
       repos/*/pulls/*/comments) or_empty review_comments.json | out ;;
       repos/*/pulls/*/reviews) or_empty reviews.json | out ;;
       repos/*/issues/*/comments) or_empty issue_comments.json | out ;;
       repos/*/pulls/*/files)
         jq -R -s 'split("\n") | map(select(length > 0) | split("\t") | {filename: .[1], status: (if .[0] == "A" then "added" elif .[0] == "D" then "removed" else "modified" end)})' "$DATA/name-status.txt" | out ;;
-      repos/*/pulls/*) out < "$PR" ;;
+      repos/*/pulls/*) pr_json | out ;;
       repos/*/commits/*/check-runs|repos/*/commits/*/status)
         jq '{check_runs: [.statusCheckRollup[] | {name, status: "completed", conclusion: (.conclusion | ascii_downcase)}]}' "$PR" | out ;;
       *) log UNSUPPORTED; echo "gh: Not Found (HTTP 404)" >&2; exit 1 ;;

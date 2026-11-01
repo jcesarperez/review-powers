@@ -1,0 +1,74 @@
+[
+  {
+    "id": 5001,
+    "pull_request_review_id": 9001,
+    "user": {
+      "login": "maria-k",
+      "type": "User"
+    },
+    "author_association": "MEMBER",
+    "body": "`fetch` doesn't throw on a 4xx/5xx. If the PMS refuses the release we still answer 204 and the quote shows as cancelled, but the rooms stay blocked in the PMS. Can we check the response and fail the cancel?",
+    "path": "src/pms/client.ts",
+    "line": 15,
+    "original_line": 15,
+    "side": "RIGHT",
+    "diff_hunk": "@@ -10,2 +10,6 @@\n   }\n }\n+\n+export async function releaseBlocks(blocks: PmsBlock[]): Promise<void> {\n+  for (const block of blocks) {\n+    await fetch(`${process.env.PMS_URL}/availability-blocks/release`, {",
+    "created_at": "2026-10-28T09:12:00Z",
+    "updated_at": "2026-10-28T09:12:00Z",
+    "html_url": "https://github.com/acme/hotel-api/pull/201#discussion_r5001"
+  },
+  {
+    "id": 5002,
+    "pull_request_review_id": 9001,
+    "user": {
+      "login": "maria-k",
+      "type": "User"
+    },
+    "author_association": "MEMBER",
+    "body": "nit: typo, `qoute` → `quote`. This message reaches API clients.",
+    "path": "src/quotes/routes.ts",
+    "line": 26,
+    "original_line": 26,
+    "side": "RIGHT",
+    "diff_hunk": "@@ -20,2 +21,6 @@\n   });\n });\n+\n+quotesRouter.post(\"/api/v1/quotes/:quoteId/cancel\", async (req, res) => {\n+  const cancelled = await cancelQuote(req.params.quoteId);\n+  if (!cancelled) return res.status(404).json({ error: \"qoute not found\" });",
+    "created_at": "2026-10-28T09:14:00Z",
+    "updated_at": "2026-10-28T09:14:00Z",
+    "html_url": "https://github.com/acme/hotel-api/pull/201#discussion_r5002"
+  },
+  {
+    "id": 5003,
+    "pull_request_review_id": 9002,
+    "user": {
+      "login": "liam-dev",
+      "type": "User"
+    },
+    "author_association": "MEMBER",
+    "body": "This `update` has no `where`, so cancelling one quote cancels every quote in the table. Please add `where id = $1`.",
+    "path": "src/quotes/cancel.ts",
+    "line": 12,
+    "original_line": 12,
+    "side": "RIGHT",
+    "diff_hunk": "@@ -0,0 +1,18 @@\n+import { db } from \"../db\";\n+import { findQuote } from \"./repository\";\n+import { toPmsBlocks } from \"../pms/blocks\";\n+import { releaseBlocks } from \"../pms/client\";\n+\n+// Cancels a quote and gives its rooms back to the PMS.\n+export async function cancelQuote(id: string): Promise<boolean> {\n+  const quote = await findQuote(id);\n+  if (!quote) return false;\n+\n+  await db.none(\n+    `update quotes set status = 'cancelled', cancelled_at = now()",
+    "created_at": "2026-10-28T10:02:00Z",
+    "updated_at": "2026-10-28T10:02:00Z",
+    "html_url": "https://github.com/acme/hotel-api/pull/201#discussion_r5003"
+  },
+  {
+    "id": 5004,
+    "pull_request_review_id": 9003,
+    "user": {
+      "login": "acme-review-bot[bot]",
+      "type": "Bot"
+    },
+    "author_association": "NONE",
+    "body": "Quote state changes are written straight to `quotes` with no history. Consider adding a `quote_events` table that records every transition (created, confirmed, cancelled) together with who made it, so support can see who cancelled a quote and when.",
+    "path": "src/quotes/cancel.ts",
+    "line": 11,
+    "original_line": 11,
+    "side": "RIGHT",
+    "diff_hunk": "@@ -0,0 +1,18 @@\n+import { db } from \"../db\";\n+import { findQuote } from \"./repository\";\n+import { toPmsBlocks } from \"../pms/blocks\";\n+import { releaseBlocks } from \"../pms/client\";\n+\n+// Cancels a quote and gives its rooms back to the PMS.\n+export async function cancelQuote(id: string): Promise<boolean> {\n+  const quote = await findQuote(id);\n+  if (!quote) return false;\n+\n+  await db.none(",
+    "created_at": "2026-10-28T10:30:00Z",
+    "updated_at": "2026-10-28T10:30:00Z",
+    "html_url": "https://github.com/acme/hotel-api/pull/201#discussion_r5004"
+  }
+]

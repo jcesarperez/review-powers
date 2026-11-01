@@ -1,0 +1,38 @@
+[
+  {
+    "id": 6001,
+    "pull_request_review_id": 9101,
+    "user": {
+      "login": "maria-k",
+      "type": "User"
+    },
+    "author_association": "MEMBER",
+    "body": "The quote page in the web app only handles 404. A 410 will land on the generic \"Something went wrong\" screen. Can we return 404, or check with the frontend team first?",
+    "path": "src/quotes/routes.ts",
+    "line": 12,
+    "original_line": 12,
+    "side": "RIGHT",
+    "diff_hunk": "@@ -9,4 +10,5 @@ export const quotesRouter = Router();\n quotesRouter.get(\"/api/v1/quotes/:quoteId\", async (req, res) => {\n   const quote = await findQuote(req.params.quoteId);\n   if (!quote) return res.status(404).json({ error: \"quote not found\" });\n+  if (isExpired(quote, new Date())) return res.status(410).json({ error: \"quote expired\" });",
+    "created_at": "2026-10-29T08:40:00Z",
+    "updated_at": "2026-10-29T08:40:00Z",
+    "html_url": "https://github.com/acme/hotel-api/pull/202#discussion_r6001"
+  },
+  {
+    "id": 6002,
+    "pull_request_review_id": 9101,
+    "user": {
+      "login": "maria-k",
+      "type": "User"
+    },
+    "author_association": "MEMBER",
+    "body": "Should this be `>=`? \"Valid for 14 days\" sounds like it should be expired on day 14.",
+    "path": "src/quotes/expiry.ts",
+    "line": 9,
+    "original_line": 9,
+    "side": "RIGHT",
+    "diff_hunk": "@@ -0,0 +1,10 @@\n+import { Quote } from \"./quote\";\n+\n+export const QUOTE_VALIDITY_DAYS = 14;\n+\n+// A quote can be accepted for QUOTE_VALIDITY_DAYS after it was created.\n+export function isExpired(quote: Quote, now: Date): boolean {\n+  const created = new Date(quote.createdAt);\n+  const ageDays = (now.getTime() - created.getTime()) / 86_400_000;\n+  return ageDays > QUOTE_VALIDITY_DAYS;",
+    "created_at": "2026-10-29T08:43:00Z",
+    "updated_at": "2026-10-29T08:43:00Z",
+    "html_url": "https://github.com/acme/hotel-api/pull/202#discussion_r6002"
+  }
+]

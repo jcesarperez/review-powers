@@ -1,0 +1,26 @@
+[
+  {
+    "id": 9101,
+    "user": {
+      "login": "maria-k",
+      "type": "User"
+    },
+    "author_association": "MEMBER",
+    "body": "Looks good overall. The main thing for me is the 410, see inline.",
+    "state": "CHANGES_REQUESTED",
+    "submitted_at": "2026-10-29T08:45:00Z",
+    "html_url": "https://github.com/acme/hotel-api/pull/202#pullrequestreview-9101"
+  },
+  {
+    "id": 9102,
+    "user": {
+      "login": "acme-review-bot[bot]",
+      "type": "Bot"
+    },
+    "author_association": "NONE",
+    "body": "## Review summary\n\nThe change adds a 14-day expiry to quotes. Two suggestions:\n\n1. **Magic number.** `86_400_000` in `isExpired` is the number of milliseconds in a day. Extract it to a named constant such as `MS_PER_DAY`.\n2. **Missing tests.** `isExpired` has no unit tests. Add cases around the boundary: a quote exactly 14 days old, and one a minute past it.",
+    "state": "COMMENTED",
+    "submitted_at": "2026-10-29T09:30:00Z",
+    "html_url": "https://github.com/acme/hotel-api/pull/202#pullrequestreview-9102"
+  }
+]

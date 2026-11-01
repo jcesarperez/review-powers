@@ -1,0 +1,28 @@
+{
+  "number": 201,
+  "title": "Cancel quotes and release their PMS blocks",
+  "body": "Adds `POST /api/v1/quotes/:quoteId/cancel`.\n\nCancelling marks the quote as cancelled and releases its availability blocks in the PMS, so the rooms can be sold again. Adds `status` and `cancelled_at` columns to `quotes`.",
+  "state": "OPEN",
+  "author": {
+    "login": "ana-dev"
+  },
+  "baseRefName": "main",
+  "headRefName": "feat/cancel-quotes",
+  "url": "https://github.com/acme/hotel-api/pull/201",
+  "isDraft": false,
+  "reviewDecision": "CHANGES_REQUESTED",
+  "reviews": [],
+  "comments": [],
+  "statusCheckRollup": [
+    {
+      "name": "lint",
+      "status": "COMPLETED",
+      "conclusion": "SUCCESS"
+    },
+    {
+      "name": "unit-tests",
+      "status": "COMPLETED",
+      "conclusion": "SUCCESS"
+    }
+  ]
+}

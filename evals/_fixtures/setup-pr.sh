@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Builds the hotel-api repo with one fixture PR and wires the fake `gh` to it.
 # Called from a case's scaffold script, whose cwd is the empty eval workspace.
-# Usage: setup-pr.sh <pr-number>
-#   ./                       git repo on main = base/; the PR branch (base/ + prs/<n>/files/) is on origin only
+# Usage: setup-pr.sh <pr-number> [reviewer|author]
+#   reviewer (default)       ./ is a git repo on main = base/; the PR branch (base/ + prs/<n>/files/) is on origin only
+#   author                   ./ is on the PR branch, tracking origin; gh is logged in as the PR's author
 #   ./.git/gh-calls.log      every gh call, READ or WRITE (graders read it)
 #   $HOME/origin/            bare clone acting as the GitHub remote
 #   $HOME/.gh-fixture/       data the fake gh serves, outside the agent's repo
@@ -10,10 +11,12 @@
 
 set -euo pipefail
 N="$1"
+ROLE="${2:-reviewer}"
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PR_DIR="$HERE/hotel-api/prs/$N"
 REPO="$(pwd)"
 DATA="$HOME/.gh-fixture"
+mkdir -p "$DATA" "$HOME/.bin"
 
 cp -R "$HERE/hotel-api/base/." "$REPO/"
 git init -q -b main
@@ -27,7 +30,7 @@ git checkout -q -b "$HEAD_BRANCH"
 cp -R "$PR_DIR/files/." "$REPO/"
 git add -A
 git commit -q -m "$(jq -r .title "$PR_DIR/pr.json")"
-git checkout -q main
+[ "$ROLE" = author ] || git checkout -q main
 
 # A local bare "origin" that also has GitHub's refs/pull/<n>/head, so fetching
 # the PR works without network.
@@ -37,10 +40,15 @@ git -C "$ORIGIN" update-ref "refs/pull/$N/head" "refs/heads/$HEAD_BRANCH"
 git remote add origin "$ORIGIN"
 git fetch -q origin
 git branch -q --set-upstream-to=origin/main main
-# A reviewer has the PR only on the remote until they check it out.
-git branch -q -D "$HEAD_BRANCH"
+if [ "$ROLE" = author ]; then
+  git branch -q --set-upstream-to="origin/$HEAD_BRANCH" "$HEAD_BRANCH"
+  jq -r .author.login "$PR_DIR/pr.json" > "$DATA/viewer"
+else
+  echo reviewer > "$DATA/viewer"
+  # A reviewer has the PR only on the remote until they check it out.
+  git branch -q -D "$HEAD_BRANCH"
+fi
 
-mkdir -p "$DATA" "$HOME/.bin"
 cp "$PR_DIR"/*.json "$DATA/"
 # Precomputed so the fake gh doesn't need git inside the sandbox.
 git diff "main...origin/$HEAD_BRANCH" > "$DATA/diff.patch"

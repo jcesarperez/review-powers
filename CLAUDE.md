@@ -26,7 +26,7 @@ CHANGELOG.md                Keep a Changelog, semver
 
 ## Evals
 
-- **Run:** `claude plugin eval . --scaffold --allow-tools Bash --judge-model sonnet`
+- **Run:** `claude plugin eval . --scaffold --allow-tools Bash Edit Write --judge-model sonnet`
 - **Smoke:** add `--runs 1 --ablation none`; filter with `--tag` or `--case`.
 - **Before and after:** run a skill's evals on both sides of a change.
 - **More:** fixtures, graders, the fake `gh` and adding a case → `evals/README.md`.

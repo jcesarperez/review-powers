@@ -1,0 +1,28 @@
+{
+  "number": 202,
+  "title": "Expire quotes after 14 days",
+  "body": "Quotes can now be accepted for 14 days after they are created. Opening an older quote returns `410 Gone` with `quote expired`.\n\nAdds `createdAt` to `Quote`, read from the existing `created_at` column.",
+  "state": "OPEN",
+  "author": {
+    "login": "ana-dev"
+  },
+  "baseRefName": "main",
+  "headRefName": "feat/quote-expiry",
+  "url": "https://github.com/acme/hotel-api/pull/202",
+  "isDraft": false,
+  "reviewDecision": "CHANGES_REQUESTED",
+  "reviews": [],
+  "comments": [],
+  "statusCheckRollup": [
+    {
+      "name": "lint",
+      "status": "COMPLETED",
+      "conclusion": "SUCCESS"
+    },
+    {
+      "name": "unit-tests",
+      "status": "COMPLETED",
+      "conclusion": "SUCCESS"
+    }
+  ]
+}
