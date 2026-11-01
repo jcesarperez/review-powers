@@ -30,3 +30,4 @@ CHANGELOG.md                Keep a Changelog, semver
 - **Smoke:** add `--runs 1 --ablation none`; filter with `--tag` or `--case`.
 - **Before and after:** run a skill's evals on both sides of a change.
 - **More:** fixtures, graders, the fake `gh` and adding a case → `evals/README.md`.
+- **Results:** runs land in `evals/results/<timestamp>/` and are git-ignored. On release, copy the full-suite run's `aggregate-result.json` (no `--tag`) to `evals/results/<version>/` and commit it with the release. Check `suite.plugins[0].version` matches. Never commit `report.html` or timestamped folders.

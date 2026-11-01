@@ -1,0 +1,1328 @@
+{
+  "schemaVersion": 1,
+  "claudeVersion": "2.1.314",
+  "startedAt": "2026-11-01T15:28:27.079Z",
+  "durationSeconds": 131,
+  "costUsd": 1.614843,
+  "partial": false,
+  "suite": {
+    "root": "/Users/julio.perez/dev/personal-workspace/review-powers",
+    "ablation": "none",
+    "judgeModel": "sonnet",
+    "threshold": 1,
+    "concurrency": 3,
+    "plugins": [
+      {
+        "name": "review-powers",
+        "version": "1.0.0",
+        "path": "/Users/julio.perez/dev/personal-workspace/review-powers"
+      }
+    ]
+  },
+  "cases": [
+    {
+      "name": "review-pr-feedback-all-feeds",
+      "dir": "evals/review-pr-feedback/all-feeds",
+      "source": "mixed",
+      "promptMarkdown": "/review-powers:review-pr-feedback https://github.com/acme/hotel-api/pull/202",
+      "runsPerCase": 3,
+      "timeoutSeconds": 900,
+      "maxTurns": 40,
+      "graders": [
+        {
+          "name": "covers-bot-review-body",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "MS_PER_DAY|86_?400_?000|magic number|milliseconds",
+            "flags": "i",
+            "match": "contains"
+          }
+        },
+        {
+          "name": "covers-conversation-comment",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "invoic",
+            "flags": "i",
+            "match": "contains"
+          }
+        },
+        {
+          "name": "covers-every-comment",
+          "type": "llm",
+          "weight": 3,
+          "graderMarkdown": "The PR's feedback is spread over three places. Each point below must get its\nown verdict or recommendation in the reply:\n\n1. Inline, `maria-k`: the web app only handles 404, so the new 410 for an\n   expired quote would show a generic error screen.\n2. Inline, `maria-k`: should `ageDays > 14` be `>=`?\n3. Conversation comment, `tom-qa`: will a stay whose quote is older than 14\n   days still be invoiced?\n4. Bot review body, `acme-review-bot[bot]`: `86_400_000` is a magic number;\n   extract a constant like `MS_PER_DAY`.\n5. Bot review body, `acme-review-bot[bot]`: `isExpired` has no tests; add\n   boundary cases.\n\n`maria-k`'s review body (\"main thing is the 410, see inline\") adds no new\npoint and need not be listed separately.\n\nPASS if all five points are present, each with a verdict or recommendation.\nFAIL if any is missing or only mentioned without saying what to do about it.",
+          "config": {
+            "criteria": "The PR's feedback is spread over three places. Each point below must get its\nown verdict or recommendation in the reply:\n\n1. Inline, `maria-k`: the web app only handles 404, so the new 410 for an\n   expired quote would show a generic error screen.\n2. Inline, `maria-k`: should `ageDays > 14` be `>=`?\n3. Conversation comment, `tom-qa`: will a stay whose quote is older than 14\n   days still be invoiced?\n4. Bot review body, `acme-review-bot[bot]`: `86_400_000` is a magic number;\n   extract a constant like `MS_PER_DAY`.\n5. Bot review body, `acme-review-bot[bot]`: `isExpired` has no tests; add\n   boundary cases.\n\n`maria-k`'s review body (\"main thing is the 410, see inline\") adds no new\npoint and need not be listed separately.\n\nPASS if all five points are present, each with a verdict or recommendation.\nFAIL if any is missing or only mentioned without saying what to do about it.",
+            "focus": "last_message"
+          }
+        },
+        {
+          "name": "diff-lines-well-formed",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "```diff\\n(?:[ +-][^\\n]*\\n)*(?!```)[^ +\\-\\n]",
+            "flags": "",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "diff-not-raw-json",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "```diff\\n[^`]*?\\n[ +-]\\s*(\"\\w+\"\\s*:|[{\\[]\\s*$)",
+            "flags": "m",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "feeds-accounted",
+          "type": "llm",
+          "weight": 1,
+          "graderMarkdown": "A report where a source of feedback went unread looks the same as one where it\nwas empty. So the reply should say where it looked.\n\nPASS if the reply says which places it read feedback from (inline review\ncomments, conversation comments, review bodies), or otherwise makes clear all\nthree were read, e.g. \"2 inline comments, 1 conversation comment, 2 reviews\".\n\nFAIL if the reply never says where the feedback came from.",
+          "config": {
+            "criteria": "A report where a source of feedback went unread looks the same as one where it\nwas empty. So the reply should say where it looked.\n\nPASS if the reply says which places it read feedback from (inline review\ncomments, conversation comments, review bodies), or otherwise makes clear all\nthree were read, e.g. \"2 inline comments, 1 conversation comment, 2 reviews\".\n\nFAIL if the reply never says where the feedback came from.",
+            "focus": "last_message"
+          }
+        },
+        {
+          "name": "format-fits",
+          "type": "llm",
+          "weight": 2,
+          "graderMarkdown": "Judge only the form of the reply, not whether the verdicts are right.\n\nA \"block\" here means a fenced code block (```) of any kind. Headings, bullet\nlists, bold text, horizontal rules and inline `code` are not blocks.\n\nThe right form for this PR: each verdict is a few short sentences. The `>=`\nquestion is best settled with one concrete case with dates and times, in\nprose or a small `text` block. Nothing here changes a shape across services,\nso no `diff` of an API shape, `mermaid` diagram or file tree is needed.\n\nPASS if:\n- every block comes right after a short sentence saying what it shows (a\n  heading alone does not count);\n- the reply uses at most two kinds of block;\n- there is no `mermaid` diagram, no file tree and no raw JSON.\n\nFAIL if any of these is broken.",
+          "config": {
+            "criteria": "Judge only the form of the reply, not whether the verdicts are right.\n\nA \"block\" here means a fenced code block (```) of any kind. Headings, bullet\nlists, bold text, horizontal rules and inline `code` are not blocks.\n\nThe right form for this PR: each verdict is a few short sentences. The `>=`\nquestion is best settled with one concrete case with dates and times, in\nprose or a small `text` block. Nothing here changes a shape across services,\nso no `diff` of an API shape, `mermaid` diagram or file tree is needed.\n\nPASS if:\n- every block comes right after a short sentence saying what it shows (a\n  heading alone does not count);\n- the reply uses at most two kinds of block;\n- there is no `mermaid` diagram, no file tree and no raw JSON.\n\nFAIL if any of these is broken.",
+            "focus": "last_message"
+          }
+        },
+        {
+          "name": "gate-cheap-fix-untouched",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": {
+              "source": "file",
+              "path": "src/quotes/expiry.ts"
+            },
+            "pattern": "/ 86_400_000;",
+            "flags": "",
+            "match": "contains"
+          }
+        },
+        {
+          "name": "gate-no-ask-user",
+          "type": "tool_used",
+          "weight": 1,
+          "config": {
+            "tool": "AskUserQuestion",
+            "min": 0,
+            "max": 0
+          }
+        },
+        {
+          "name": "gate-no-commits",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": {
+              "source": "file",
+              "path": ".git/logs/HEAD"
+            },
+            "pattern": "\\tcommit",
+            "flags": "",
+            "match": "count:2"
+          }
+        },
+        {
+          "name": "gate-no-edit-tool",
+          "type": "tool_used",
+          "weight": 1,
+          "config": {
+            "tool": "Edit",
+            "min": 0,
+            "max": 0
+          }
+        },
+        {
+          "name": "gate-no-gh-writes",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": {
+              "source": "file",
+              "path": ".git/gh-calls.log"
+            },
+            "pattern": "^WRITE",
+            "flags": "m",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "gate-no-write-tool",
+          "type": "tool_used",
+          "weight": 1,
+          "config": {
+            "tool": "Write",
+            "min": 0,
+            "max": 0
+          }
+        },
+        {
+          "name": "no-preamble",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "^\\s*(sure|okay|ok,|great|here('s| is| are)|i('ve| have)? (reviewed|read|looked)|let me|i'll )",
+            "flags": "i",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "plain-language",
+          "type": "llm",
+          "weight": 2,
+          "graderMarkdown": "Judge only how the verdicts are written, not whether they are right.\n\nPASS if every verdict in the reply:\n- says what the comment means for the behaviour in everyday words first, with\n  any technical name (field, file, function) after it, in backticks;\n- uses short sentences;\n- explains or avoids jargon a newcomer would not know (e.g. 4xx, idempotent,\n  audit trail, magic number, boundary case).\n\nFAIL if any verdict leads with code identifiers or file paths before saying\nwhat happens, or relies on unexplained jargon.",
+          "config": {
+            "criteria": "Judge only how the verdicts are written, not whether they are right.\n\nPASS if every verdict in the reply:\n- says what the comment means for the behaviour in everyday words first, with\n  any technical name (field, file, function) after it, in backticks;\n- uses short sentences;\n- explains or avoids jargon a newcomer would not know (e.g. 4xx, idempotent,\n  audit trail, magic number, boundary case).\n\nFAIL if any verdict leads with code identifiers or file paths before saying\nwhat happens, or relies on unexplained jargon.",
+            "focus": "last_message"
+          }
+        },
+        {
+          "name": "reader-understands",
+          "type": "llm",
+          "weight": 3,
+          "graderMarkdown": "You are a reader who has never seen this codebase and can only read the reply.\n\nTwo comments need explaining:\n- `>` vs `>=`: the age is measured in milliseconds, so both versions expire a\n  quote at the same moment, exactly 14 × 24 hours after it was created. They\n  differ only for that single millisecond, so the change would not do what\n  the reviewer expects.\n- Invoicing: invoices are built from the quote without going through the\n  endpoint that now refuses expired quotes, so old stays are still invoiced.\n\nPASS if, from the reply alone, the reader would understand what the reply\nconcludes about each of these two and why, in plain terms (e.g. \"a quote\ncreated 1 Oct at 10:00 expires 15 Oct at 10:00 either way\"). The reply may\nreach a different conclusion on `>=` (e.g. that the intent should be \"whole\ncalendar days\") as long as the reasoning is clear without opening the code.\n\nFAIL if either is missing, or if understanding it requires knowing the code.",
+          "config": {
+            "criteria": "You are a reader who has never seen this codebase and can only read the reply.\n\nTwo comments need explaining:\n- `>` vs `>=`: the age is measured in milliseconds, so both versions expire a\n  quote at the same moment, exactly 14 × 24 hours after it was created. They\n  differ only for that single millisecond, so the change would not do what\n  the reviewer expects.\n- Invoicing: invoices are built from the quote without going through the\n  endpoint that now refuses expired quotes, so old stays are still invoiced.\n\nPASS if, from the reply alone, the reader would understand what the reply\nconcludes about each of these two and why, in plain terms (e.g. \"a quote\ncreated 1 Oct at 10:00 expires 15 Oct at 10:00 either way\"). The reply may\nreach a different conclusion on `>=` (e.g. that the intent should be \"whole\ncalendar days\") as long as the reasoning is clear without opening the code.\n\nFAIL if either is missing, or if understanding it requires knowing the code.",
+            "focus": "last_message"
+          }
+        }
+      ],
+      "arms": {
+        "with": [
+          {
+            "score": 0.6818181818181818,
+            "passed": false,
+            "turns": 6,
+            "costUsd": 0.40228139999999996,
+            "judgeCostUsd": 0.15880999999999998,
+            "durationSeconds": 77,
+            "startedAt": "2026-11-01T15:28:27.150Z",
+            "error": null,
+            "tracePath": "/private/tmp/e-UrOo0E/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "covers-bot-review-body",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched MS_PER_DAY|86_?400_?000|magic number|milliseconds",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "covers-conversation-comment",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched invoic",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "covers-every-comment",
+                "passed": true,
+                "weight": 3,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "# PR #202 review: \"Expire quotes after 14 days\"\n\nThe local branch is at `5c9f4d4`, the same commit as the PR head. There were three places to check for feedback: reviews (2), inline comments (2) and conversation comments (1). I read all three. CI checks (lint, unit-tests) are green. I haven't edited, committed or replied to anything yet.\n\n## The one I'd prioritise: the expiry check is on *viewing* the quote, and the code doesn't know whether a quote was accepted\n\nNo reviewer raised this directly. It's what Maria's 410 comment and Tom's invoice question both point toward.\n\n```text\nA guest accepts a quote on day 3. They arrive on day 60.\nOn day 20 they open the quote page again.\n  today:  GET /api/v1/quotes/:id → 410 \"quote expired\" → web app shows \"Something went wrong\"\n  intent: the quote can't be *accepted* after 14 days (PR body: \"can be accepted for 14 days\")\n```\n\n- The only endpoint in this repo is the read endpoint, `GET /api/v1/quotes/:quoteId`, and the check sits on it (`src/quotes/routes.ts:12`). There's no accept endpoint here for the check to guard.\n- `Quote` has no status or acceptance field (`src/quotes/quote.ts:10-18`), so `isExpired` can't tell an accepted quote from an abandoned one.\n- **Unverified:** whether the web app or staff tools use this endpoint after a quote is accepted. Checking the frontend's calls would settle it. If they do, the PR breaks the quote page for every confirmed booking more than 14 days old.\n\n**Recommendation:** check this with Ana before merging. The expiry should either move onto the accept path (wherever that lives) or skip accepted quotes. This also changes how much Maria's 404/410 question matters.\n\n## Maria: 410 lands on the frontend's generic error screen (`routes.ts:12`)\n\n- **Correct?** I can't verify it, because the frontend isn't in this repo. It's plausible.\n- **Counterpoint:** returning 404 would be wrong in its own way. The frontend would show \"not found\" for a quote that exists, and API clients couldn't tell an expired quote from a missing one. 410 is the right status.\n- **Recommendation:** keep 410 and take her second option: have the frontend handle it, ideally with a \"this quote has expired\" screen. If the first issue gets fixed, far fewer users hit this path at all.\n- Also, separate from this PR: `db.one` in pg-promise rejects when no row matches instead of returning null. That means `if (!row)` (`repository.ts:6`) never fires, and an unknown quote id probably produces a 500, not the 404 the frontend expects. I haven't run it to confirm. It's out of scope, but worth knowing while discussing which error codes the frontend handles.\n\n## Maria: should `>` be `>=`? (`expiry.ts:9`)\n\n```text\nCreated 2026-10-01 10:00:00.000\n  >  : expired from 10-15 10:00:00.001\n  >= : expired from 10-15 10:00:00.000\n```\n\n- **Correct?** The two operators differ only at that single millisecond, not by a day. Either way the quote is valid for exactly 14×24h. The age is measured in elapsed time, not calendar days, so \"day 14\" doesn't map onto the operator the way the comment suggests.\n- **Recommendation:** no code change. Reply explaining the above. If she meant \"expires at midnight on calendar day 14 in the hotel's timezone,\" that's a different rule and should be raised with Ana.\n\n## Bot: replace `86_400_000` with `MS_PER_DAY` (`expiry.ts:8`)\n\nCorrect, a one-line change, and fixing it costs less than arguing about it. **Take it.**\n\n## Bot: add boundary tests for `isExpired`\n\n- **Correct and valuable.** `isExpired` is a pure function that takes `now` as an argument, so it's easy to test.\n- **Cost problem:** this checkout has no `package.json`, test runner or test files, only `src/`. CI's `unit-tests` check passes, but I can't see what it runs. Adding tests might mean setting up a test framework inside a feature PR.\n- **Recommendation:** add tests if a test setup exists somewhere I'm not seeing. If it doesn't, reply saying so and leave it as a follow-up.\n\n## Tom: will stays with quotes older than 14 days still be invoiced?\n\n**Yes, verified in the code.** `buildInvoice` calls `findQuote` directly and never calls `isExpired` (`src/invoicing/invoice-builder.ts:9-10`). Reply-only. His underlying worry, that guests who already stayed get blocked, does apply to the quote page, though. See the first issue.\n\n## A smaller unverified risk: how `created_at` gets read\n\nThe database schema isn't in this repo, so I can't check either of these:\n- If `created_at` can be null for old rows, `new Date(null)` is 1970, so those quotes count as expired immediately.\n- If the column is `timestamp` without a time zone, Node reads it in the server's local time and the cutoff shifts by the server's UTC offset.\n\nChecking the column definition would settle both.\n\n**Proposed plan:**\n1. Raise the first issue with Ana before changing any code.\n2. Add `MS_PER_DAY`.\n3. Add tests only if a test setup exists.\n4. Reply to all five comments: 410 stays with a frontend follow-up, `>` stays with the explanation, and Tom gets his answer.\n\nTell me what you want to take, change or push back on."
+              },
+              {
+                "name": "diff-lines-well-formed",
+                "passed": true,
+                "weight": 1,
+                "explanation": "pattern absent as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "diff-not-raw-json",
+                "passed": true,
+                "weight": 1,
+                "explanation": "pattern absent as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "feeds-accounted",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "# PR #202 review: \"Expire quotes after 14 days\"\n\nThe local branch is at `5c9f4d4`, the same commit as the PR head. There were three places to check for feedback: reviews (2), inline comments (2) and conversation comments (1). I read all three. CI checks (lint, unit-tests) are green. I haven't edited, committed or replied to anything yet.\n\n## The one I'd prioritise: the expiry check is on *viewing* the quote, and the code doesn't know whether a quote was accepted\n\nNo reviewer raised this directly. It's what Maria's 410 comment and Tom's invoice question both point toward.\n\n```text\nA guest accepts a quote on day 3. They arrive on day 60.\nOn day 20 they open the quote page again.\n  today:  GET /api/v1/quotes/:id → 410 \"quote expired\" → web app shows \"Something went wrong\"\n  intent: the quote can't be *accepted* after 14 days (PR body: \"can be accepted for 14 days\")\n```\n\n- The only endpoint in this repo is the read endpoint, `GET /api/v1/quotes/:quoteId`, and the check sits on it (`src/quotes/routes.ts:12`). There's no accept endpoint here for the check to guard.\n- `Quote` has no status or acceptance field (`src/quotes/quote.ts:10-18`), so `isExpired` can't tell an accepted quote from an abandoned one.\n- **Unverified:** whether the web app or staff tools use this endpoint after a quote is accepted. Checking the frontend's calls would settle it. If they do, the PR breaks the quote page for every confirmed booking more than 14 days old.\n\n**Recommendation:** check this with Ana before merging. The expiry should either move onto the accept path (wherever that lives) or skip accepted quotes. This also changes how much Maria's 404/410 question matters.\n\n## Maria: 410 lands on the frontend's generic error screen (`routes.ts:12`)\n\n- **Correct?** I can't verify it, because the frontend isn't in this repo. It's plausible.\n- **Counterpoint:** returning 404 would be wrong in its own way. The frontend would show \"not found\" for a quote that exists, and API clients couldn't tell an expired quote from a missing one. 410 is the right status.\n- **Recommendation:** keep 410 and take her second option: have the frontend handle it, ideally with a \"this quote has expired\" screen. If the first issue gets fixed, far fewer users hit this path at all.\n- Also, separate from this PR: `db.one` in pg-promise rejects when no row matches instead of returning null. That means `if (!row)` (`repository.ts:6`) never fires, and an unknown quote id probably produces a 500, not the 404 the frontend expects. I haven't run it to confirm. It's out of scope, but worth knowing while discussing which error codes the frontend handles.\n\n## Maria: should `>` be `>=`? (`expiry.ts:9`)\n\n```text\nCreated 2026-10-01 10:00:00.000\n  >  : expired from 10-15 10:00:00.001\n  >= : expired from 10-15 10:00:00.000\n```\n\n- **Correct?** The two operators differ only at that single millisecond, not by a day. Either way the quote is valid for exactly 14×24h. The age is measured in elapsed time, not calendar days, so \"day 14\" doesn't map onto the operator the way the comment suggests.\n- **Recommendation:** no code change. Reply explaining the above. If she meant \"expires at midnight on calendar day 14 in the hotel's timezone,\" that's a different rule and should be raised with Ana.\n\n## Bot: replace `86_400_000` with `MS_PER_DAY` (`expiry.ts:8`)\n\nCorrect, a one-line change, and fixing it costs less than arguing about it. **Take it.**\n\n## Bot: add boundary tests for `isExpired`\n\n- **Correct and valuable.** `isExpired` is a pure function that takes `now` as an argument, so it's easy to test.\n- **Cost problem:** this checkout has no `package.json`, test runner or test files, only `src/`. CI's `unit-tests` check passes, but I can't see what it runs. Adding tests might mean setting up a test framework inside a feature PR.\n- **Recommendation:** add tests if a test setup exists somewhere I'm not seeing. If it doesn't, reply saying so and leave it as a follow-up.\n\n## Tom: will stays with quotes older than 14 days still be invoiced?\n\n**Yes, verified in the code.** `buildInvoice` calls `findQuote` directly and never calls `isExpired` (`src/invoicing/invoice-builder.ts:9-10`). Reply-only. His underlying worry, that guests who already stayed get blocked, does apply to the quote page, though. See the first issue.\n\n## A smaller unverified risk: how `created_at` gets read\n\nThe database schema isn't in this repo, so I can't check either of these:\n- If `created_at` can be null for old rows, `new Date(null)` is 1970, so those quotes count as expired immediately.\n- If the column is `timestamp` without a time zone, Node reads it in the server's local time and the cutoff shifts by the server's UTC offset.\n\nChecking the column definition would settle both.\n\n**Proposed plan:**\n1. Raise the first issue with Ana before changing any code.\n2. Add `MS_PER_DAY`.\n3. Add tests only if a test setup exists.\n4. Reply to all five comments: 410 stays with a frontend follow-up, `>` stays with the explanation, and Tom gets his answer.\n\nTell me what you want to take, change or push back on."
+              },
+              {
+                "name": "format-fits",
+                "passed": false,
+                "weight": 2,
+                "explanation": "judge votes: FAIL FAIL FAIL",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  false,
+                  false,
+                  false
+                ],
+                "evidence": "# PR #202 review: \"Expire quotes after 14 days\"\n\nThe local branch is at `5c9f4d4`, the same commit as the PR head. There were three places to check for feedback: reviews (2), inline comments (2) and conversation comments (1). I read all three. CI checks (lint, unit-tests) are green. I haven't edited, committed or replied to anything yet.\n\n## The one I'd prioritise: the expiry check is on *viewing* the quote, and the code doesn't know whether a quote was accepted\n\nNo reviewer raised this directly. It's what Maria's 410 comment and Tom's invoice question both point toward.\n\n```text\nA guest accepts a quote on day 3. They arrive on day 60.\nOn day 20 they open the quote page again.\n  today:  GET /api/v1/quotes/:id → 410 \"quote expired\" → web app shows \"Something went wrong\"\n  intent: the quote can't be *accepted* after 14 days (PR body: \"can be accepted for 14 days\")\n```\n\n- The only endpoint in this repo is the read endpoint, `GET /api/v1/quotes/:quoteId`, and the check sits on it (`src/quotes/routes.ts:12`). There's no accept endpoint here for the check to guard.\n- `Quote` has no status or acceptance field (`src/quotes/quote.ts:10-18`), so `isExpired` can't tell an accepted quote from an abandoned one.\n- **Unverified:** whether the web app or staff tools use this endpoint after a quote is accepted. Checking the frontend's calls would settle it. If they do, the PR breaks the quote page for every confirmed booking more than 14 days old.\n\n**Recommendation:** check this with Ana before merging. The expiry should either move onto the accept path (wherever that lives) or skip accepted quotes. This also changes how much Maria's 404/410 question matters.\n\n## Maria: 410 lands on the frontend's generic error screen (`routes.ts:12`)\n\n- **Correct?** I can't verify it, because the frontend isn't in this repo. It's plausible.\n- **Counterpoint:** returning 404 would be wrong in its own way. The frontend would show \"not found\" for a quote that exists, and API clients couldn't tell an expired quote from a missing one. 410 is the right status.\n- **Recommendation:** keep 410 and take her second option: have the frontend handle it, ideally with a \"this quote has expired\" screen. If the first issue gets fixed, far fewer users hit this path at all.\n- Also, separate from this PR: `db.one` in pg-promise rejects when no row matches instead of returning null. That means `if (!row)` (`repository.ts:6`) never fires, and an unknown quote id probably produces a 500, not the 404 the frontend expects. I haven't run it to confirm. It's out of scope, but worth knowing while discussing which error codes the frontend handles.\n\n## Maria: should `>` be `>=`? (`expiry.ts:9`)\n\n```text\nCreated 2026-10-01 10:00:00.000\n  >  : expired from 10-15 10:00:00.001\n  >= : expired from 10-15 10:00:00.000\n```\n\n- **Correct?** The two operators differ only at that single millisecond, not by a day. Either way the quote is valid for exactly 14×24h. The age is measured in elapsed time, not calendar days, so \"day 14\" doesn't map onto the operator the way the comment suggests.\n- **Recommendation:** no code change. Reply explaining the above. If she meant \"expires at midnight on calendar day 14 in the hotel's timezone,\" that's a different rule and should be raised with Ana.\n\n## Bot: replace `86_400_000` with `MS_PER_DAY` (`expiry.ts:8`)\n\nCorrect, a one-line change, and fixing it costs less than arguing about it. **Take it.**\n\n## Bot: add boundary tests for `isExpired`\n\n- **Correct and valuable.** `isExpired` is a pure function that takes `now` as an argument, so it's easy to test.\n- **Cost problem:** this checkout has no `package.json`, test runner or test files, only `src/`. CI's `unit-tests` check passes, but I can't see what it runs. Adding tests might mean setting up a test framework inside a feature PR.\n- **Recommendation:** add tests if a test setup exists somewhere I'm not seeing. If it doesn't, reply saying so and leave it as a follow-up.\n\n## Tom: will stays with quotes older than 14 days still be invoiced?\n\n**Yes, verified in the code.** `buildInvoice` calls `findQuote` directly and never calls `isExpired` (`src/invoicing/invoice-builder.ts:9-10`). Reply-only. His underlying worry, that guests who already stayed get blocked, does apply to the quote page, though. See the first issue.\n\n## A smaller unverified risk: how `created_at` gets read\n\nThe database schema isn't in this repo, so I can't check either of these:\n- If `created_at` can be null for old rows, `new Date(null)` is 1970, so those quotes count as expired immediately.\n- If the column is `timestamp` without a time zone, Node reads it in the server's local time and the cutoff shifts by the server's UTC offset.\n\nChecking the column definition would settle both.\n\n**Proposed plan:**\n1. Raise the first issue with Ana before changing any code.\n2. Add `MS_PER_DAY`.\n3. Add tests only if a test setup exists.\n4. Reply to all five comments: 410 stays with a frontend follow-up, `>` stays with the explanation, and Tom gets his answer.\n\nTell me what you want to take, change or push back on."
+              },
+              {
+                "name": "gate-cheap-fix-untouched",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched / 86_400_000;",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "gate-no-ask-user",
+                "passed": true,
+                "weight": 1,
+                "explanation": "AskUserQuestion called 0x (expected 0..0)",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "gate-no-commits",
+                "passed": true,
+                "weight": 1,
+                "explanation": "found 2 matches (expected 2)",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "gate-no-edit-tool",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Edit called 0x (expected 0..0)",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "gate-no-gh-writes",
+                "passed": true,
+                "weight": 1,
+                "explanation": "pattern absent as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "gate-no-write-tool",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Write called 0x (expected 0..0)",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "no-preamble",
+                "passed": true,
+                "weight": 1,
+                "explanation": "pattern absent as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "plain-language",
+                "passed": false,
+                "weight": 2,
+                "explanation": "judge votes: FAIL FAIL FAIL",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  false,
+                  false,
+                  false
+                ],
+                "evidence": "# PR #202 review: \"Expire quotes after 14 days\"\n\nThe local branch is at `5c9f4d4`, the same commit as the PR head. There were three places to check for feedback: reviews (2), inline comments (2) and conversation comments (1). I read all three. CI checks (lint, unit-tests) are green. I haven't edited, committed or replied to anything yet.\n\n## The one I'd prioritise: the expiry check is on *viewing* the quote, and the code doesn't know whether a quote was accepted\n\nNo reviewer raised this directly. It's what Maria's 410 comment and Tom's invoice question both point toward.\n\n```text\nA guest accepts a quote on day 3. They arrive on day 60.\nOn day 20 they open the quote page again.\n  today:  GET /api/v1/quotes/:id → 410 \"quote expired\" → web app shows \"Something went wrong\"\n  intent: the quote can't be *accepted* after 14 days (PR body: \"can be accepted for 14 days\")\n```\n\n- The only endpoint in this repo is the read endpoint, `GET /api/v1/quotes/:quoteId`, and the check sits on it (`src/quotes/routes.ts:12`). There's no accept endpoint here for the check to guard.\n- `Quote` has no status or acceptance field (`src/quotes/quote.ts:10-18`), so `isExpired` can't tell an accepted quote from an abandoned one.\n- **Unverified:** whether the web app or staff tools use this endpoint after a quote is accepted. Checking the frontend's calls would settle it. If they do, the PR breaks the quote page for every confirmed booking more than 14 days old.\n\n**Recommendation:** check this with Ana before merging. The expiry should either move onto the accept path (wherever that lives) or skip accepted quotes. This also changes how much Maria's 404/410 question matters.\n\n## Maria: 410 lands on the frontend's generic error screen (`routes.ts:12`)\n\n- **Correct?** I can't verify it, because the frontend isn't in this repo. It's plausible.\n- **Counterpoint:** returning 404 would be wrong in its own way. The frontend would show \"not found\" for a quote that exists, and API clients couldn't tell an expired quote from a missing one. 410 is the right status.\n- **Recommendation:** keep 410 and take her second option: have the frontend handle it, ideally with a \"this quote has expired\" screen. If the first issue gets fixed, far fewer users hit this path at all.\n- Also, separate from this PR: `db.one` in pg-promise rejects when no row matches instead of returning null. That means `if (!row)` (`repository.ts:6`) never fires, and an unknown quote id probably produces a 500, not the 404 the frontend expects. I haven't run it to confirm. It's out of scope, but worth knowing while discussing which error codes the frontend handles.\n\n## Maria: should `>` be `>=`? (`expiry.ts:9`)\n\n```text\nCreated 2026-10-01 10:00:00.000\n  >  : expired from 10-15 10:00:00.001\n  >= : expired from 10-15 10:00:00.000\n```\n\n- **Correct?** The two operators differ only at that single millisecond, not by a day. Either way the quote is valid for exactly 14×24h. The age is measured in elapsed time, not calendar days, so \"day 14\" doesn't map onto the operator the way the comment suggests.\n- **Recommendation:** no code change. Reply explaining the above. If she meant \"expires at midnight on calendar day 14 in the hotel's timezone,\" that's a different rule and should be raised with Ana.\n\n## Bot: replace `86_400_000` with `MS_PER_DAY` (`expiry.ts:8`)\n\nCorrect, a one-line change, and fixing it costs less than arguing about it. **Take it.**\n\n## Bot: add boundary tests for `isExpired`\n\n- **Correct and valuable.** `isExpired` is a pure function that takes `now` as an argument, so it's easy to test.\n- **Cost problem:** this checkout has no `package.json`, test runner or test files, only `src/`. CI's `unit-tests` check passes, but I can't see what it runs. Adding tests might mean setting up a test framework inside a feature PR.\n- **Recommendation:** add tests if a test setup exists somewhere I'm not seeing. If it doesn't, reply saying so and leave it as a follow-up.\n\n## Tom: will stays with quotes older than 14 days still be invoiced?\n\n**Yes, verified in the code.** `buildInvoice` calls `findQuote` directly and never calls `isExpired` (`src/invoicing/invoice-builder.ts:9-10`). Reply-only. His underlying worry, that guests who already stayed get blocked, does apply to the quote page, though. See the first issue.\n\n## A smaller unverified risk: how `created_at` gets read\n\nThe database schema isn't in this repo, so I can't check either of these:\n- If `created_at` can be null for old rows, `new Date(null)` is 1970, so those quotes count as expired immediately.\n- If the column is `timestamp` without a time zone, Node reads it in the server's local time and the cutoff shifts by the server's UTC offset.\n\nChecking the column definition would settle both.\n\n**Proposed plan:**\n1. Raise the first issue with Ana before changing any code.\n2. Add `MS_PER_DAY`.\n3. Add tests only if a test setup exists.\n4. Reply to all five comments: 410 stays with a frontend follow-up, `>` stays with the explanation, and Tom gets his answer.\n\nTell me what you want to take, change or push back on."
+              },
+              {
+                "name": "reader-understands",
+                "passed": false,
+                "weight": 3,
+                "explanation": "judge votes: FAIL FAIL FAIL",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  false,
+                  false,
+                  false
+                ],
+                "evidence": "# PR #202 review: \"Expire quotes after 14 days\"\n\nThe local branch is at `5c9f4d4`, the same commit as the PR head. There were three places to check for feedback: reviews (2), inline comments (2) and conversation comments (1). I read all three. CI checks (lint, unit-tests) are green. I haven't edited, committed or replied to anything yet.\n\n## The one I'd prioritise: the expiry check is on *viewing* the quote, and the code doesn't know whether a quote was accepted\n\nNo reviewer raised this directly. It's what Maria's 410 comment and Tom's invoice question both point toward.\n\n```text\nA guest accepts a quote on day 3. They arrive on day 60.\nOn day 20 they open the quote page again.\n  today:  GET /api/v1/quotes/:id → 410 \"quote expired\" → web app shows \"Something went wrong\"\n  intent: the quote can't be *accepted* after 14 days (PR body: \"can be accepted for 14 days\")\n```\n\n- The only endpoint in this repo is the read endpoint, `GET /api/v1/quotes/:quoteId`, and the check sits on it (`src/quotes/routes.ts:12`). There's no accept endpoint here for the check to guard.\n- `Quote` has no status or acceptance field (`src/quotes/quote.ts:10-18`), so `isExpired` can't tell an accepted quote from an abandoned one.\n- **Unverified:** whether the web app or staff tools use this endpoint after a quote is accepted. Checking the frontend's calls would settle it. If they do, the PR breaks the quote page for every confirmed booking more than 14 days old.\n\n**Recommendation:** check this with Ana before merging. The expiry should either move onto the accept path (wherever that lives) or skip accepted quotes. This also changes how much Maria's 404/410 question matters.\n\n## Maria: 410 lands on the frontend's generic error screen (`routes.ts:12`)\n\n- **Correct?** I can't verify it, because the frontend isn't in this repo. It's plausible.\n- **Counterpoint:** returning 404 would be wrong in its own way. The frontend would show \"not found\" for a quote that exists, and API clients couldn't tell an expired quote from a missing one. 410 is the right status.\n- **Recommendation:** keep 410 and take her second option: have the frontend handle it, ideally with a \"this quote has expired\" screen. If the first issue gets fixed, far fewer users hit this path at all.\n- Also, separate from this PR: `db.one` in pg-promise rejects when no row matches instead of returning null. That means `if (!row)` (`repository.ts:6`) never fires, and an unknown quote id probably produces a 500, not the 404 the frontend expects. I haven't run it to confirm. It's out of scope, but worth knowing while discussing which error codes the frontend handles.\n\n## Maria: should `>` be `>=`? (`expiry.ts:9`)\n\n```text\nCreated 2026-10-01 10:00:00.000\n  >  : expired from 10-15 10:00:00.001\n  >= : expired from 10-15 10:00:00.000\n```\n\n- **Correct?** The two operators differ only at that single millisecond, not by a day. Either way the quote is valid for exactly 14×24h. The age is measured in elapsed time, not calendar days, so \"day 14\" doesn't map onto the operator the way the comment suggests.\n- **Recommendation:** no code change. Reply explaining the above. If she meant \"expires at midnight on calendar day 14 in the hotel's timezone,\" that's a different rule and should be raised with Ana.\n\n## Bot: replace `86_400_000` with `MS_PER_DAY` (`expiry.ts:8`)\n\nCorrect, a one-line change, and fixing it costs less than arguing about it. **Take it.**\n\n## Bot: add boundary tests for `isExpired`\n\n- **Correct and valuable.** `isExpired` is a pure function that takes `now` as an argument, so it's easy to test.\n- **Cost problem:** this checkout has no `package.json`, test runner or test files, only `src/`. CI's `unit-tests` check passes, but I can't see what it runs. Adding tests might mean setting up a test framework inside a feature PR.\n- **Recommendation:** add tests if a test setup exists somewhere I'm not seeing. If it doesn't, reply saying so and leave it as a follow-up.\n\n## Tom: will stays with quotes older than 14 days still be invoiced?\n\n**Yes, verified in the code.** `buildInvoice` calls `findQuote` directly and never calls `isExpired` (`src/invoicing/invoice-builder.ts:9-10`). Reply-only. His underlying worry, that guests who already stayed get blocked, does apply to the quote page, though. See the first issue.\n\n## A smaller unverified risk: how `created_at` gets read\n\nThe database schema isn't in this repo, so I can't check either of these:\n- If `created_at` can be null for old rows, `new Date(null)` is 1970, so those quotes count as expired immediately.\n- If the column is `timestamp` without a time zone, Node reads it in the server's local time and the cutoff shifts by the server's UTC offset.\n\nChecking the column definition would settle both.\n\n**Proposed plan:**\n1. Raise the first issue with Ana before changing any code.\n2. Add `MS_PER_DAY`.\n3. Add tests only if a test setup exists.\n4. Reply to all five comments: 410 stays with a frontend follow-up, `>` stays with the explanation, and Tom gets his answer.\n\nTell me what you want to take, change or push back on."
+              }
+            ]
+          }
+        ]
+      },
+      "aggregates": {
+        "score": 0.6818181818181818,
+        "passRate": 0
+      }
+    },
+    {
+      "name": "review-pr-feedback-verdict-per-comment",
+      "dir": "evals/review-pr-feedback/verdict-per-comment",
+      "source": "mixed",
+      "promptMarkdown": "/review-powers:review-pr-feedback https://github.com/acme/hotel-api/pull/201",
+      "runsPerCase": 3,
+      "timeoutSeconds": 900,
+      "maxTurns": 40,
+      "graders": [
+        {
+          "name": "diff-lines-well-formed",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "```diff\\n(?:[ +-][^\\n]*\\n)*(?!```)[^ +\\-\\n]",
+            "flags": "",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "diff-not-raw-json",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "```diff\\n[^`]*?\\n[ +-]\\s*(\"\\w+\"\\s*:|[{\\[]\\s*$)",
+            "flags": "m",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "format-fits",
+          "type": "llm",
+          "weight": 2,
+          "graderMarkdown": "Judge only the form of the reply, not whether the verdicts are right.\n\nA \"block\" here means a fenced code block (```) of any kind. Headings, bullet\nlists, bold text, horizontal rules and inline `code` are not blocks.\n\nThe right form for this PR: each verdict is a few short sentences. The PMS\nrelease is best shown with one concrete case (e.g. \"cancel quote Q-17 → the\nPMS answers 500 → the API still answers 204 → the 2 Doubles stay blocked\"),\nin prose or a small `text` block. The false-alarm `where` may quote the two\nlines of SQL. The typo and the out-of-scope suggestion are already concrete\nand need no block at all.\n\nPASS if:\n- every block comes right after a short sentence saying what it shows (a\n  heading alone does not count);\n- the reply uses at most two kinds of block;\n- the typo and the out-of-scope suggestion get no block;\n- there is no raw JSON and no `mermaid` diagram unless it shows an interaction\n  between services that prose couldn't say in two sentences.\n\nFAIL if any of these is broken.",
+          "config": {
+            "criteria": "Judge only the form of the reply, not whether the verdicts are right.\n\nA \"block\" here means a fenced code block (```) of any kind. Headings, bullet\nlists, bold text, horizontal rules and inline `code` are not blocks.\n\nThe right form for this PR: each verdict is a few short sentences. The PMS\nrelease is best shown with one concrete case (e.g. \"cancel quote Q-17 → the\nPMS answers 500 → the API still answers 204 → the 2 Doubles stay blocked\"),\nin prose or a small `text` block. The false-alarm `where` may quote the two\nlines of SQL. The typo and the out-of-scope suggestion are already concrete\nand need no block at all.\n\nPASS if:\n- every block comes right after a short sentence saying what it shows (a\n  heading alone does not count);\n- the reply uses at most two kinds of block;\n- the typo and the out-of-scope suggestion get no block;\n- there is no raw JSON and no `mermaid` diagram unless it shows an interaction\n  between services that prose couldn't say in two sentences.\n\nFAIL if any of these is broken.",
+            "focus": "last_message"
+          }
+        },
+        {
+          "name": "gate-cheap-fix-untouched",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": {
+              "source": "file",
+              "path": "src/quotes/routes.ts"
+            },
+            "pattern": "qoute not found",
+            "flags": "",
+            "match": "contains"
+          }
+        },
+        {
+          "name": "gate-no-ask-user",
+          "type": "tool_used",
+          "weight": 1,
+          "config": {
+            "tool": "AskUserQuestion",
+            "min": 0,
+            "max": 0
+          }
+        },
+        {
+          "name": "gate-no-commits",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": {
+              "source": "file",
+              "path": ".git/logs/HEAD"
+            },
+            "pattern": "\\tcommit",
+            "flags": "",
+            "match": "count:2"
+          }
+        },
+        {
+          "name": "gate-no-edit-tool",
+          "type": "tool_used",
+          "weight": 1,
+          "config": {
+            "tool": "Edit",
+            "min": 0,
+            "max": 0
+          }
+        },
+        {
+          "name": "gate-no-gh-writes",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": {
+              "source": "file",
+              "path": ".git/gh-calls.log"
+            },
+            "pattern": "^WRITE",
+            "flags": "m",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "gate-no-write-tool",
+          "type": "tool_used",
+          "weight": 1,
+          "config": {
+            "tool": "Write",
+            "min": 0,
+            "max": 0
+          }
+        },
+        {
+          "name": "no-preamble",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "^\\s*(sure|okay|ok,|great|here('s| is| are)|i('ve| have)? (reviewed|read|looked)|let me|i'll )",
+            "flags": "i",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "plain-language",
+          "type": "llm",
+          "weight": 2,
+          "graderMarkdown": "Judge only how the verdicts are written, not whether they are right.\n\nPASS if every verdict in the reply:\n- says what the comment means for the behaviour in everyday words first, with\n  any technical name (field, file, function) after it, in backticks;\n- uses short sentences;\n- explains or avoids jargon a newcomer would not know (e.g. 4xx, idempotent,\n  audit trail, magic number, boundary case).\n\nFAIL if any verdict leads with code identifiers or file paths before saying\nwhat happens, or relies on unexplained jargon.",
+          "config": {
+            "criteria": "Judge only how the verdicts are written, not whether they are right.\n\nPASS if every verdict in the reply:\n- says what the comment means for the behaviour in everyday words first, with\n  any technical name (field, file, function) after it, in backticks;\n- uses short sentences;\n- explains or avoids jargon a newcomer would not know (e.g. 4xx, idempotent,\n  audit trail, magic number, boundary case).\n\nFAIL if any verdict leads with code identifiers or file paths before saying\nwhat happens, or relies on unexplained jargon.",
+            "focus": "last_message"
+          }
+        },
+        {
+          "name": "reader-understands",
+          "type": "llm",
+          "weight": 3,
+          "graderMarkdown": "You are a reader who has never seen this codebase and can only read the reply.\n\nTwo comments need explaining:\n- The PMS release: if the PMS refuses to release the rooms, the cancel still\n  reports success. The quote shows as cancelled, but its rooms stay blocked in\n  the PMS, so the hotel can't sell them and nobody is told.\n- The missing `where`: the reviewer thought cancelling one quote would cancel\n  all of them. It doesn't, because the condition is on the next line of the\n  same query.\n\nPASS if, from the reply alone, the reader would understand both: what goes\nwrong for the hotel in the first, and why the second is a false alarm. The\nreply may use different words; what matters is that it is clear without\nopening the code.\n\nFAIL if either is missing, or if understanding it requires knowing the code\n(e.g. only \"`releaseBlocks` ignores `res.ok`, `client.ts:15`\" with no plain\nexplanation of what happens to whom).",
+          "config": {
+            "criteria": "You are a reader who has never seen this codebase and can only read the reply.\n\nTwo comments need explaining:\n- The PMS release: if the PMS refuses to release the rooms, the cancel still\n  reports success. The quote shows as cancelled, but its rooms stay blocked in\n  the PMS, so the hotel can't sell them and nobody is told.\n- The missing `where`: the reviewer thought cancelling one quote would cancel\n  all of them. It doesn't, because the condition is on the next line of the\n  same query.\n\nPASS if, from the reply alone, the reader would understand both: what goes\nwrong for the hotel in the first, and why the second is a false alarm. The\nreply may use different words; what matters is that it is clear without\nopening the code.\n\nFAIL if either is missing, or if understanding it requires knowing the code\n(e.g. only \"`releaseBlocks` ignores `res.ok`, `client.ts:15`\" with no plain\nexplanation of what happens to whom).",
+            "focus": "last_message"
+          }
+        },
+        {
+          "name": "verdict-audit-out-of-scope",
+          "type": "llm",
+          "weight": 2,
+          "graderMarkdown": "`acme-review-bot[bot]` suggested adding a `quote_events` table that records\nevery state change of a quote (created, confirmed, cancelled) and who made it.\nThe observation is true (nothing records who cancelled a quote), but the fix\nis a new table covering every state change, well past what this PR does.\n\nPASS if the reply accepts the observation as true or reasonable, but\nrecommends not doing it in this PR (e.g. a follow-up issue or a separate PR).\n\nFAIL if the reply recommends building it in this PR, dismisses it as wrong,\nor leaves it out.",
+          "config": {
+            "criteria": "`acme-review-bot[bot]` suggested adding a `quote_events` table that records\nevery state change of a quote (created, confirmed, cancelled) and who made it.\nThe observation is true (nothing records who cancelled a quote), but the fix\nis a new table covering every state change, well past what this PR does.\n\nPASS if the reply accepts the observation as true or reasonable, but\nrecommends not doing it in this PR (e.g. a follow-up issue or a separate PR).\n\nFAIL if the reply recommends building it in this PR, dismisses it as wrong,\nor leaves it out.",
+            "focus": "last_message"
+          }
+        },
+        {
+          "name": "verdict-pms-release-correct",
+          "type": "llm",
+          "weight": 2,
+          "graderMarkdown": "The PR adds cancelling a quote. Reviewer `maria-k` commented on `releaseBlocks`\nin `src/pms/client.ts`: `fetch` doesn't throw when the PMS answers with an\nerror, so a refused release goes unnoticed, the API still answers 204, and the\nrooms stay blocked in the PMS. This is correct: the response is never checked.\n\nPASS if the reply agrees this comment is correct and recommends fixing it in\nthis PR. Going further is fine (e.g. noting the quote is already marked\ncancelled before the release is attempted).\n\nFAIL if the reply rejects it, calls it unverified, recommends skipping it, or\nleaves it out.",
+          "config": {
+            "criteria": "The PR adds cancelling a quote. Reviewer `maria-k` commented on `releaseBlocks`\nin `src/pms/client.ts`: `fetch` doesn't throw when the PMS answers with an\nerror, so a refused release goes unnoticed, the API still answers 204, and the\nrooms stay blocked in the PMS. This is correct: the response is never checked.\n\nPASS if the reply agrees this comment is correct and recommends fixing it in\nthis PR. Going further is fine (e.g. noting the quote is already marked\ncancelled before the release is attempted).\n\nFAIL if the reply rejects it, calls it unverified, recommends skipping it, or\nleaves it out.",
+            "focus": "last_message"
+          }
+        },
+        {
+          "name": "verdict-typo-do-it",
+          "type": "llm",
+          "weight": 2,
+          "graderMarkdown": "Reviewer `maria-k` left a nit: the 404 error message says `qoute not found`\ninstead of `quote not found`, and API clients see it. It is trivial, but\nfixing it costs less than discussing it.\n\nPASS if the reply recommends fixing the typo.\n\nFAIL if the reply recommends skipping it as too minor, leaves the decision\nwithout a recommendation, or leaves the comment out.",
+          "config": {
+            "criteria": "Reviewer `maria-k` left a nit: the 404 error message says `qoute not found`\ninstead of `quote not found`, and API clients see it. It is trivial, but\nfixing it costs less than discussing it.\n\nPASS if the reply recommends fixing the typo.\n\nFAIL if the reply recommends skipping it as too minor, leaves the decision\nwithout a recommendation, or leaves the comment out.",
+            "focus": "last_message"
+          }
+        },
+        {
+          "name": "verdict-where-clause-wrong",
+          "type": "llm",
+          "weight": 2,
+          "graderMarkdown": "Reviewer `liam-dev` commented that the `update` in `src/quotes/cancel.ts` has\nno `where`, so cancelling one quote would cancel every quote. This is wrong:\nthe SQL string continues on the next line with `where id = $1`, so only the\nquote being cancelled changes.\n\nPASS if the reply says the reviewer is mistaken because the condition is\nthere (on the next line), and recommends not changing the code, only replying\nto explain.\n\nFAIL if the reply agrees with the reviewer, recommends adding a `where`, hedges\nwithout reading the code, or leaves the comment out.",
+          "config": {
+            "criteria": "Reviewer `liam-dev` commented that the `update` in `src/quotes/cancel.ts` has\nno `where`, so cancelling one quote would cancel every quote. This is wrong:\nthe SQL string continues on the next line with `where id = $1`, so only the\nquote being cancelled changes.\n\nPASS if the reply says the reviewer is mistaken because the condition is\nthere (on the next line), and recommends not changing the code, only replying\nto explain.\n\nFAIL if the reply agrees with the reviewer, recommends adding a `where`, hedges\nwithout reading the code, or leaves the comment out.",
+            "focus": "last_message"
+          }
+        }
+      ],
+      "arms": {
+        "with": [
+          {
+            "score": 0.7916666666666666,
+            "passed": false,
+            "turns": 8,
+            "costUsd": 0.4435724,
+            "judgeCostUsd": 0.17250999999999997,
+            "durationSeconds": 79,
+            "startedAt": "2026-11-01T15:28:27.150Z",
+            "error": null,
+            "tracePath": "/private/tmp/e-yxXqeb/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "diff-lines-well-formed",
+                "passed": true,
+                "weight": 1,
+                "explanation": "pattern absent as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "diff-not-raw-json",
+                "passed": true,
+                "weight": 1,
+                "explanation": "pattern absent as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "format-fits",
+                "passed": false,
+                "weight": 2,
+                "explanation": "judge votes: PASS FAIL FAIL",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  false,
+                  false
+                ],
+                "evidence": "I've read all the feedback and checked each finding against the code. Nothing has been edited, committed, or replied to yet.\n\n**What I read:** all 4 inline comments (2 from maria-k, 1 from liam-dev, 1 from acme-review-bot). There are 0 conversation comments, and all 3 review summaries are empty. The checkout is at `a2f3f07`, which matches `origin/feat/cancel-quotes`, so the line numbers below are the ones the reviewers saw. There's no `package.json`, `node_modules` or test suite in the repo, so I couldn't run anything. Every claim below comes from reading the code.\n\n---\n\n### 1. maria-k: `releaseBlocks` ignores PMS errors (`src/pms/client.ts:15`). **Correct, and worse than she says. Take it.**\n\n```text\nA guest cancels a 3-room-line quote. The PMS returns 500 on the 2nd release.\n  today:   DB says cancelled, API says 204, line 1 released, lines 2–3 still blocked. Nobody finds out.\n  naive fix (just throw):  DB still says cancelled (the update runs first, cancel.ts:11-15),\n           API says 500, client retries → line 1 is released a second time.\n```\n\n- `fetch` only rejects on network errors, never on 4xx/5xx, so she's right about the mechanism. `res.ok` is never checked (`client.ts:15-19`).\n- What she understated is the order of operations. `cancelQuote` writes `status = 'cancelled'` **before** it releases anything (`cancel.ts:11-16`). Throwing on a bad response alone still leaves the quote marked cancelled while its rooms are blocked. The fix she wants (\"fail the cancel\") also has to release first and write `cancelled` only after every release succeeds.\n- Partial failure across the loop is still possible after that. I'd accept it and make retries safe (see #5) rather than build compensation.\n- Unverified: whether a thrown error becomes a clean 500. Express 4 doesn't catch rejected async handlers, so the request would just hang. Express 5 does catch them. With no `package.json` I can't tell which version this is.\n- The same `fetch` bug exists in `reserveBlocks` (`client.ts:5`). That code predates this PR and nothing in the repo calls it, so I'd leave it alone.\n\n**Recommendation:** add a `res.ok` check that throws, and move the DB update after `releaseBlocks`. Small and contained.\n\n### 2. maria-k: typo `qoute` (`src/quotes/routes.ts:26`). **Correct. Fix it, it's one word.**\n\nOne catch: the message is probably never sent. `findQuote` uses `db.one` (`repository.ts:5`), and in pg-promise that throws when no row matches instead of returning nothing. So `if (!row)` never fires, and an unknown quote id gives a 500, not this 404. The GET route (`routes.ts:11`) has the same problem. That code predates this PR and I'd treat it as a follow-up (`db.oneOrNone`), but it means the cancel endpoint's 404 path is dead today. That's worth telling Maria.\n\n### 3. liam-dev: \"`update` has no `where`\" (`src/quotes/cancel.ts:12`). **Wrong. Reject politely.**\n\nThe query continues on the next line, `where id = $1` at `cancel.ts:13`, with `[id]` at `:14`. The comment's diff excerpt stops at line 12, which probably explains the misread. No change needed.\n\n### 4. acme-review-bot: add a `quote_events` audit table (`cancel.ts:11`). **A reasonable idea, but outside this PR. Decline.**\n\nThis would be a new table, a migration, writes on create, confirm and cancel (most of which don't live in this PR), and an actor identity. The route has no auth context (`routes.ts:24`), so there's no \"who\" to record. `cancelled_at` already covers \"when\". I'd reply that it's a fair idea and suggest a ticket.\n\n### 5. Not raised by anyone: cancelling twice releases the rooms twice. **I recommend taking it, alongside #1.**\n\n```text\nA client double-clicks Cancel, or retries after the 500 from #1.\n  today:  both calls pass (findQuote doesn't check status), both send releases to the PMS.\n```\n\n- `findQuote` doesn't read the new `status` column (`repository.ts:7-14`), and `cancelQuote` never checks it.\n- A release is identified only by `{roomType, rooms, nights, arrival}` (`blocks.ts:4-9`), not by a block id. Unverified: if the PMS treats a release as \"free N rooms of this type on this date\", the second release could free rooms that **another** quote is holding. Only the PMS API docs or the PMS team can confirm that.\n- A cheap guard: return early when the quote is already cancelled, and use `update … where id = $1 and status <> 'cancelled'`. The guard is also what makes the reordering in #1 safe to retry.\n- Counterpoint: this goes beyond what any reviewer asked for. But #1 introduces a retry path, so this is the other half of that fix rather than new scope.\n\n---\n\n**My proposal:** fix #1 (with the reordering), #2 and #5 in one commit, and reply to all four comments. For Liam's I'd point at line 13. For the bot's I'd decline as out of scope. Maria's reply would also mention the `db.one` 404 issue as a follow-up.\n\nTwo things would help from you:\n- Do you agree on #5?\n- Do you know whether this service runs Express 4 or 5? It decides whether #1 also needs a `try/catch` in the route."
+              },
+              {
+                "name": "gate-cheap-fix-untouched",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched qoute not found",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "gate-no-ask-user",
+                "passed": true,
+                "weight": 1,
+                "explanation": "AskUserQuestion called 0x (expected 0..0)",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "gate-no-commits",
+                "passed": true,
+                "weight": 1,
+                "explanation": "found 2 matches (expected 2)",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "gate-no-edit-tool",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Edit called 0x (expected 0..0)",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "gate-no-gh-writes",
+                "passed": true,
+                "weight": 1,
+                "explanation": "pattern absent as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "gate-no-write-tool",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Write called 0x (expected 0..0)",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "no-preamble",
+                "passed": false,
+                "weight": 1,
+                "explanation": "pattern found (expected absent)",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "plain-language",
+                "passed": false,
+                "weight": 2,
+                "explanation": "judge votes: FAIL FAIL FAIL",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  false,
+                  false,
+                  false
+                ],
+                "evidence": "I've read all the feedback and checked each finding against the code. Nothing has been edited, committed, or replied to yet.\n\n**What I read:** all 4 inline comments (2 from maria-k, 1 from liam-dev, 1 from acme-review-bot). There are 0 conversation comments, and all 3 review summaries are empty. The checkout is at `a2f3f07`, which matches `origin/feat/cancel-quotes`, so the line numbers below are the ones the reviewers saw. There's no `package.json`, `node_modules` or test suite in the repo, so I couldn't run anything. Every claim below comes from reading the code.\n\n---\n\n### 1. maria-k: `releaseBlocks` ignores PMS errors (`src/pms/client.ts:15`). **Correct, and worse than she says. Take it.**\n\n```text\nA guest cancels a 3-room-line quote. The PMS returns 500 on the 2nd release.\n  today:   DB says cancelled, API says 204, line 1 released, lines 2–3 still blocked. Nobody finds out.\n  naive fix (just throw):  DB still says cancelled (the update runs first, cancel.ts:11-15),\n           API says 500, client retries → line 1 is released a second time.\n```\n\n- `fetch` only rejects on network errors, never on 4xx/5xx, so she's right about the mechanism. `res.ok` is never checked (`client.ts:15-19`).\n- What she understated is the order of operations. `cancelQuote` writes `status = 'cancelled'` **before** it releases anything (`cancel.ts:11-16`). Throwing on a bad response alone still leaves the quote marked cancelled while its rooms are blocked. The fix she wants (\"fail the cancel\") also has to release first and write `cancelled` only after every release succeeds.\n- Partial failure across the loop is still possible after that. I'd accept it and make retries safe (see #5) rather than build compensation.\n- Unverified: whether a thrown error becomes a clean 500. Express 4 doesn't catch rejected async handlers, so the request would just hang. Express 5 does catch them. With no `package.json` I can't tell which version this is.\n- The same `fetch` bug exists in `reserveBlocks` (`client.ts:5`). That code predates this PR and nothing in the repo calls it, so I'd leave it alone.\n\n**Recommendation:** add a `res.ok` check that throws, and move the DB update after `releaseBlocks`. Small and contained.\n\n### 2. maria-k: typo `qoute` (`src/quotes/routes.ts:26`). **Correct. Fix it, it's one word.**\n\nOne catch: the message is probably never sent. `findQuote` uses `db.one` (`repository.ts:5`), and in pg-promise that throws when no row matches instead of returning nothing. So `if (!row)` never fires, and an unknown quote id gives a 500, not this 404. The GET route (`routes.ts:11`) has the same problem. That code predates this PR and I'd treat it as a follow-up (`db.oneOrNone`), but it means the cancel endpoint's 404 path is dead today. That's worth telling Maria.\n\n### 3. liam-dev: \"`update` has no `where`\" (`src/quotes/cancel.ts:12`). **Wrong. Reject politely.**\n\nThe query continues on the next line, `where id = $1` at `cancel.ts:13`, with `[id]` at `:14`. The comment's diff excerpt stops at line 12, which probably explains the misread. No change needed.\n\n### 4. acme-review-bot: add a `quote_events` audit table (`cancel.ts:11`). **A reasonable idea, but outside this PR. Decline.**\n\nThis would be a new table, a migration, writes on create, confirm and cancel (most of which don't live in this PR), and an actor identity. The route has no auth context (`routes.ts:24`), so there's no \"who\" to record. `cancelled_at` already covers \"when\". I'd reply that it's a fair idea and suggest a ticket.\n\n### 5. Not raised by anyone: cancelling twice releases the rooms twice. **I recommend taking it, alongside #1.**\n\n```text\nA client double-clicks Cancel, or retries after the 500 from #1.\n  today:  both calls pass (findQuote doesn't check status), both send releases to the PMS.\n```\n\n- `findQuote` doesn't read the new `status` column (`repository.ts:7-14`), and `cancelQuote` never checks it.\n- A release is identified only by `{roomType, rooms, nights, arrival}` (`blocks.ts:4-9`), not by a block id. Unverified: if the PMS treats a release as \"free N rooms of this type on this date\", the second release could free rooms that **another** quote is holding. Only the PMS API docs or the PMS team can confirm that.\n- A cheap guard: return early when the quote is already cancelled, and use `update … where id = $1 and status <> 'cancelled'`. The guard is also what makes the reordering in #1 safe to retry.\n- Counterpoint: this goes beyond what any reviewer asked for. But #1 introduces a retry path, so this is the other half of that fix rather than new scope.\n\n---\n\n**My proposal:** fix #1 (with the reordering), #2 and #5 in one commit, and reply to all four comments. For Liam's I'd point at line 13. For the bot's I'd decline as out of scope. Maria's reply would also mention the `db.one` 404 issue as a follow-up.\n\nTwo things would help from you:\n- Do you agree on #5?\n- Do you know whether this service runs Express 4 or 5? It decides whether #1 also needs a `try/catch` in the route."
+              },
+              {
+                "name": "reader-understands",
+                "passed": true,
+                "weight": 3,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "I've read all the feedback and checked each finding against the code. Nothing has been edited, committed, or replied to yet.\n\n**What I read:** all 4 inline comments (2 from maria-k, 1 from liam-dev, 1 from acme-review-bot). There are 0 conversation comments, and all 3 review summaries are empty. The checkout is at `a2f3f07`, which matches `origin/feat/cancel-quotes`, so the line numbers below are the ones the reviewers saw. There's no `package.json`, `node_modules` or test suite in the repo, so I couldn't run anything. Every claim below comes from reading the code.\n\n---\n\n### 1. maria-k: `releaseBlocks` ignores PMS errors (`src/pms/client.ts:15`). **Correct, and worse than she says. Take it.**\n\n```text\nA guest cancels a 3-room-line quote. The PMS returns 500 on the 2nd release.\n  today:   DB says cancelled, API says 204, line 1 released, lines 2–3 still blocked. Nobody finds out.\n  naive fix (just throw):  DB still says cancelled (the update runs first, cancel.ts:11-15),\n           API says 500, client retries → line 1 is released a second time.\n```\n\n- `fetch` only rejects on network errors, never on 4xx/5xx, so she's right about the mechanism. `res.ok` is never checked (`client.ts:15-19`).\n- What she understated is the order of operations. `cancelQuote` writes `status = 'cancelled'` **before** it releases anything (`cancel.ts:11-16`). Throwing on a bad response alone still leaves the quote marked cancelled while its rooms are blocked. The fix she wants (\"fail the cancel\") also has to release first and write `cancelled` only after every release succeeds.\n- Partial failure across the loop is still possible after that. I'd accept it and make retries safe (see #5) rather than build compensation.\n- Unverified: whether a thrown error becomes a clean 500. Express 4 doesn't catch rejected async handlers, so the request would just hang. Express 5 does catch them. With no `package.json` I can't tell which version this is.\n- The same `fetch` bug exists in `reserveBlocks` (`client.ts:5`). That code predates this PR and nothing in the repo calls it, so I'd leave it alone.\n\n**Recommendation:** add a `res.ok` check that throws, and move the DB update after `releaseBlocks`. Small and contained.\n\n### 2. maria-k: typo `qoute` (`src/quotes/routes.ts:26`). **Correct. Fix it, it's one word.**\n\nOne catch: the message is probably never sent. `findQuote` uses `db.one` (`repository.ts:5`), and in pg-promise that throws when no row matches instead of returning nothing. So `if (!row)` never fires, and an unknown quote id gives a 500, not this 404. The GET route (`routes.ts:11`) has the same problem. That code predates this PR and I'd treat it as a follow-up (`db.oneOrNone`), but it means the cancel endpoint's 404 path is dead today. That's worth telling Maria.\n\n### 3. liam-dev: \"`update` has no `where`\" (`src/quotes/cancel.ts:12`). **Wrong. Reject politely.**\n\nThe query continues on the next line, `where id = $1` at `cancel.ts:13`, with `[id]` at `:14`. The comment's diff excerpt stops at line 12, which probably explains the misread. No change needed.\n\n### 4. acme-review-bot: add a `quote_events` audit table (`cancel.ts:11`). **A reasonable idea, but outside this PR. Decline.**\n\nThis would be a new table, a migration, writes on create, confirm and cancel (most of which don't live in this PR), and an actor identity. The route has no auth context (`routes.ts:24`), so there's no \"who\" to record. `cancelled_at` already covers \"when\". I'd reply that it's a fair idea and suggest a ticket.\n\n### 5. Not raised by anyone: cancelling twice releases the rooms twice. **I recommend taking it, alongside #1.**\n\n```text\nA client double-clicks Cancel, or retries after the 500 from #1.\n  today:  both calls pass (findQuote doesn't check status), both send releases to the PMS.\n```\n\n- `findQuote` doesn't read the new `status` column (`repository.ts:7-14`), and `cancelQuote` never checks it.\n- A release is identified only by `{roomType, rooms, nights, arrival}` (`blocks.ts:4-9`), not by a block id. Unverified: if the PMS treats a release as \"free N rooms of this type on this date\", the second release could free rooms that **another** quote is holding. Only the PMS API docs or the PMS team can confirm that.\n- A cheap guard: return early when the quote is already cancelled, and use `update … where id = $1 and status <> 'cancelled'`. The guard is also what makes the reordering in #1 safe to retry.\n- Counterpoint: this goes beyond what any reviewer asked for. But #1 introduces a retry path, so this is the other half of that fix rather than new scope.\n\n---\n\n**My proposal:** fix #1 (with the reordering), #2 and #5 in one commit, and reply to all four comments. For Liam's I'd point at line 13. For the bot's I'd decline as out of scope. Maria's reply would also mention the `db.one` 404 issue as a follow-up.\n\nTwo things would help from you:\n- Do you agree on #5?\n- Do you know whether this service runs Express 4 or 5? It decides whether #1 also needs a `try/catch` in the route."
+              },
+              {
+                "name": "verdict-audit-out-of-scope",
+                "passed": true,
+                "weight": 2,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "I've read all the feedback and checked each finding against the code. Nothing has been edited, committed, or replied to yet.\n\n**What I read:** all 4 inline comments (2 from maria-k, 1 from liam-dev, 1 from acme-review-bot). There are 0 conversation comments, and all 3 review summaries are empty. The checkout is at `a2f3f07`, which matches `origin/feat/cancel-quotes`, so the line numbers below are the ones the reviewers saw. There's no `package.json`, `node_modules` or test suite in the repo, so I couldn't run anything. Every claim below comes from reading the code.\n\n---\n\n### 1. maria-k: `releaseBlocks` ignores PMS errors (`src/pms/client.ts:15`). **Correct, and worse than she says. Take it.**\n\n```text\nA guest cancels a 3-room-line quote. The PMS returns 500 on the 2nd release.\n  today:   DB says cancelled, API says 204, line 1 released, lines 2–3 still blocked. Nobody finds out.\n  naive fix (just throw):  DB still says cancelled (the update runs first, cancel.ts:11-15),\n           API says 500, client retries → line 1 is released a second time.\n```\n\n- `fetch` only rejects on network errors, never on 4xx/5xx, so she's right about the mechanism. `res.ok` is never checked (`client.ts:15-19`).\n- What she understated is the order of operations. `cancelQuote` writes `status = 'cancelled'` **before** it releases anything (`cancel.ts:11-16`). Throwing on a bad response alone still leaves the quote marked cancelled while its rooms are blocked. The fix she wants (\"fail the cancel\") also has to release first and write `cancelled` only after every release succeeds.\n- Partial failure across the loop is still possible after that. I'd accept it and make retries safe (see #5) rather than build compensation.\n- Unverified: whether a thrown error becomes a clean 500. Express 4 doesn't catch rejected async handlers, so the request would just hang. Express 5 does catch them. With no `package.json` I can't tell which version this is.\n- The same `fetch` bug exists in `reserveBlocks` (`client.ts:5`). That code predates this PR and nothing in the repo calls it, so I'd leave it alone.\n\n**Recommendation:** add a `res.ok` check that throws, and move the DB update after `releaseBlocks`. Small and contained.\n\n### 2. maria-k: typo `qoute` (`src/quotes/routes.ts:26`). **Correct. Fix it, it's one word.**\n\nOne catch: the message is probably never sent. `findQuote` uses `db.one` (`repository.ts:5`), and in pg-promise that throws when no row matches instead of returning nothing. So `if (!row)` never fires, and an unknown quote id gives a 500, not this 404. The GET route (`routes.ts:11`) has the same problem. That code predates this PR and I'd treat it as a follow-up (`db.oneOrNone`), but it means the cancel endpoint's 404 path is dead today. That's worth telling Maria.\n\n### 3. liam-dev: \"`update` has no `where`\" (`src/quotes/cancel.ts:12`). **Wrong. Reject politely.**\n\nThe query continues on the next line, `where id = $1` at `cancel.ts:13`, with `[id]` at `:14`. The comment's diff excerpt stops at line 12, which probably explains the misread. No change needed.\n\n### 4. acme-review-bot: add a `quote_events` audit table (`cancel.ts:11`). **A reasonable idea, but outside this PR. Decline.**\n\nThis would be a new table, a migration, writes on create, confirm and cancel (most of which don't live in this PR), and an actor identity. The route has no auth context (`routes.ts:24`), so there's no \"who\" to record. `cancelled_at` already covers \"when\". I'd reply that it's a fair idea and suggest a ticket.\n\n### 5. Not raised by anyone: cancelling twice releases the rooms twice. **I recommend taking it, alongside #1.**\n\n```text\nA client double-clicks Cancel, or retries after the 500 from #1.\n  today:  both calls pass (findQuote doesn't check status), both send releases to the PMS.\n```\n\n- `findQuote` doesn't read the new `status` column (`repository.ts:7-14`), and `cancelQuote` never checks it.\n- A release is identified only by `{roomType, rooms, nights, arrival}` (`blocks.ts:4-9`), not by a block id. Unverified: if the PMS treats a release as \"free N rooms of this type on this date\", the second release could free rooms that **another** quote is holding. Only the PMS API docs or the PMS team can confirm that.\n- A cheap guard: return early when the quote is already cancelled, and use `update … where id = $1 and status <> 'cancelled'`. The guard is also what makes the reordering in #1 safe to retry.\n- Counterpoint: this goes beyond what any reviewer asked for. But #1 introduces a retry path, so this is the other half of that fix rather than new scope.\n\n---\n\n**My proposal:** fix #1 (with the reordering), #2 and #5 in one commit, and reply to all four comments. For Liam's I'd point at line 13. For the bot's I'd decline as out of scope. Maria's reply would also mention the `db.one` 404 issue as a follow-up.\n\nTwo things would help from you:\n- Do you agree on #5?\n- Do you know whether this service runs Express 4 or 5? It decides whether #1 also needs a `try/catch` in the route."
+              },
+              {
+                "name": "verdict-pms-release-correct",
+                "passed": true,
+                "weight": 2,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "I've read all the feedback and checked each finding against the code. Nothing has been edited, committed, or replied to yet.\n\n**What I read:** all 4 inline comments (2 from maria-k, 1 from liam-dev, 1 from acme-review-bot). There are 0 conversation comments, and all 3 review summaries are empty. The checkout is at `a2f3f07`, which matches `origin/feat/cancel-quotes`, so the line numbers below are the ones the reviewers saw. There's no `package.json`, `node_modules` or test suite in the repo, so I couldn't run anything. Every claim below comes from reading the code.\n\n---\n\n### 1. maria-k: `releaseBlocks` ignores PMS errors (`src/pms/client.ts:15`). **Correct, and worse than she says. Take it.**\n\n```text\nA guest cancels a 3-room-line quote. The PMS returns 500 on the 2nd release.\n  today:   DB says cancelled, API says 204, line 1 released, lines 2–3 still blocked. Nobody finds out.\n  naive fix (just throw):  DB still says cancelled (the update runs first, cancel.ts:11-15),\n           API says 500, client retries → line 1 is released a second time.\n```\n\n- `fetch` only rejects on network errors, never on 4xx/5xx, so she's right about the mechanism. `res.ok` is never checked (`client.ts:15-19`).\n- What she understated is the order of operations. `cancelQuote` writes `status = 'cancelled'` **before** it releases anything (`cancel.ts:11-16`). Throwing on a bad response alone still leaves the quote marked cancelled while its rooms are blocked. The fix she wants (\"fail the cancel\") also has to release first and write `cancelled` only after every release succeeds.\n- Partial failure across the loop is still possible after that. I'd accept it and make retries safe (see #5) rather than build compensation.\n- Unverified: whether a thrown error becomes a clean 500. Express 4 doesn't catch rejected async handlers, so the request would just hang. Express 5 does catch them. With no `package.json` I can't tell which version this is.\n- The same `fetch` bug exists in `reserveBlocks` (`client.ts:5`). That code predates this PR and nothing in the repo calls it, so I'd leave it alone.\n\n**Recommendation:** add a `res.ok` check that throws, and move the DB update after `releaseBlocks`. Small and contained.\n\n### 2. maria-k: typo `qoute` (`src/quotes/routes.ts:26`). **Correct. Fix it, it's one word.**\n\nOne catch: the message is probably never sent. `findQuote` uses `db.one` (`repository.ts:5`), and in pg-promise that throws when no row matches instead of returning nothing. So `if (!row)` never fires, and an unknown quote id gives a 500, not this 404. The GET route (`routes.ts:11`) has the same problem. That code predates this PR and I'd treat it as a follow-up (`db.oneOrNone`), but it means the cancel endpoint's 404 path is dead today. That's worth telling Maria.\n\n### 3. liam-dev: \"`update` has no `where`\" (`src/quotes/cancel.ts:12`). **Wrong. Reject politely.**\n\nThe query continues on the next line, `where id = $1` at `cancel.ts:13`, with `[id]` at `:14`. The comment's diff excerpt stops at line 12, which probably explains the misread. No change needed.\n\n### 4. acme-review-bot: add a `quote_events` audit table (`cancel.ts:11`). **A reasonable idea, but outside this PR. Decline.**\n\nThis would be a new table, a migration, writes on create, confirm and cancel (most of which don't live in this PR), and an actor identity. The route has no auth context (`routes.ts:24`), so there's no \"who\" to record. `cancelled_at` already covers \"when\". I'd reply that it's a fair idea and suggest a ticket.\n\n### 5. Not raised by anyone: cancelling twice releases the rooms twice. **I recommend taking it, alongside #1.**\n\n```text\nA client double-clicks Cancel, or retries after the 500 from #1.\n  today:  both calls pass (findQuote doesn't check status), both send releases to the PMS.\n```\n\n- `findQuote` doesn't read the new `status` column (`repository.ts:7-14`), and `cancelQuote` never checks it.\n- A release is identified only by `{roomType, rooms, nights, arrival}` (`blocks.ts:4-9`), not by a block id. Unverified: if the PMS treats a release as \"free N rooms of this type on this date\", the second release could free rooms that **another** quote is holding. Only the PMS API docs or the PMS team can confirm that.\n- A cheap guard: return early when the quote is already cancelled, and use `update … where id = $1 and status <> 'cancelled'`. The guard is also what makes the reordering in #1 safe to retry.\n- Counterpoint: this goes beyond what any reviewer asked for. But #1 introduces a retry path, so this is the other half of that fix rather than new scope.\n\n---\n\n**My proposal:** fix #1 (with the reordering), #2 and #5 in one commit, and reply to all four comments. For Liam's I'd point at line 13. For the bot's I'd decline as out of scope. Maria's reply would also mention the `db.one` 404 issue as a follow-up.\n\nTwo things would help from you:\n- Do you agree on #5?\n- Do you know whether this service runs Express 4 or 5? It decides whether #1 also needs a `try/catch` in the route."
+              },
+              {
+                "name": "verdict-typo-do-it",
+                "passed": true,
+                "weight": 2,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "I've read all the feedback and checked each finding against the code. Nothing has been edited, committed, or replied to yet.\n\n**What I read:** all 4 inline comments (2 from maria-k, 1 from liam-dev, 1 from acme-review-bot). There are 0 conversation comments, and all 3 review summaries are empty. The checkout is at `a2f3f07`, which matches `origin/feat/cancel-quotes`, so the line numbers below are the ones the reviewers saw. There's no `package.json`, `node_modules` or test suite in the repo, so I couldn't run anything. Every claim below comes from reading the code.\n\n---\n\n### 1. maria-k: `releaseBlocks` ignores PMS errors (`src/pms/client.ts:15`). **Correct, and worse than she says. Take it.**\n\n```text\nA guest cancels a 3-room-line quote. The PMS returns 500 on the 2nd release.\n  today:   DB says cancelled, API says 204, line 1 released, lines 2–3 still blocked. Nobody finds out.\n  naive fix (just throw):  DB still says cancelled (the update runs first, cancel.ts:11-15),\n           API says 500, client retries → line 1 is released a second time.\n```\n\n- `fetch` only rejects on network errors, never on 4xx/5xx, so she's right about the mechanism. `res.ok` is never checked (`client.ts:15-19`).\n- What she understated is the order of operations. `cancelQuote` writes `status = 'cancelled'` **before** it releases anything (`cancel.ts:11-16`). Throwing on a bad response alone still leaves the quote marked cancelled while its rooms are blocked. The fix she wants (\"fail the cancel\") also has to release first and write `cancelled` only after every release succeeds.\n- Partial failure across the loop is still possible after that. I'd accept it and make retries safe (see #5) rather than build compensation.\n- Unverified: whether a thrown error becomes a clean 500. Express 4 doesn't catch rejected async handlers, so the request would just hang. Express 5 does catch them. With no `package.json` I can't tell which version this is.\n- The same `fetch` bug exists in `reserveBlocks` (`client.ts:5`). That code predates this PR and nothing in the repo calls it, so I'd leave it alone.\n\n**Recommendation:** add a `res.ok` check that throws, and move the DB update after `releaseBlocks`. Small and contained.\n\n### 2. maria-k: typo `qoute` (`src/quotes/routes.ts:26`). **Correct. Fix it, it's one word.**\n\nOne catch: the message is probably never sent. `findQuote` uses `db.one` (`repository.ts:5`), and in pg-promise that throws when no row matches instead of returning nothing. So `if (!row)` never fires, and an unknown quote id gives a 500, not this 404. The GET route (`routes.ts:11`) has the same problem. That code predates this PR and I'd treat it as a follow-up (`db.oneOrNone`), but it means the cancel endpoint's 404 path is dead today. That's worth telling Maria.\n\n### 3. liam-dev: \"`update` has no `where`\" (`src/quotes/cancel.ts:12`). **Wrong. Reject politely.**\n\nThe query continues on the next line, `where id = $1` at `cancel.ts:13`, with `[id]` at `:14`. The comment's diff excerpt stops at line 12, which probably explains the misread. No change needed.\n\n### 4. acme-review-bot: add a `quote_events` audit table (`cancel.ts:11`). **A reasonable idea, but outside this PR. Decline.**\n\nThis would be a new table, a migration, writes on create, confirm and cancel (most of which don't live in this PR), and an actor identity. The route has no auth context (`routes.ts:24`), so there's no \"who\" to record. `cancelled_at` already covers \"when\". I'd reply that it's a fair idea and suggest a ticket.\n\n### 5. Not raised by anyone: cancelling twice releases the rooms twice. **I recommend taking it, alongside #1.**\n\n```text\nA client double-clicks Cancel, or retries after the 500 from #1.\n  today:  both calls pass (findQuote doesn't check status), both send releases to the PMS.\n```\n\n- `findQuote` doesn't read the new `status` column (`repository.ts:7-14`), and `cancelQuote` never checks it.\n- A release is identified only by `{roomType, rooms, nights, arrival}` (`blocks.ts:4-9`), not by a block id. Unverified: if the PMS treats a release as \"free N rooms of this type on this date\", the second release could free rooms that **another** quote is holding. Only the PMS API docs or the PMS team can confirm that.\n- A cheap guard: return early when the quote is already cancelled, and use `update … where id = $1 and status <> 'cancelled'`. The guard is also what makes the reordering in #1 safe to retry.\n- Counterpoint: this goes beyond what any reviewer asked for. But #1 introduces a retry path, so this is the other half of that fix rather than new scope.\n\n---\n\n**My proposal:** fix #1 (with the reordering), #2 and #5 in one commit, and reply to all four comments. For Liam's I'd point at line 13. For the bot's I'd decline as out of scope. Maria's reply would also mention the `db.one` 404 issue as a follow-up.\n\nTwo things would help from you:\n- Do you agree on #5?\n- Do you know whether this service runs Express 4 or 5? It decides whether #1 also needs a `try/catch` in the route."
+              },
+              {
+                "name": "verdict-where-clause-wrong",
+                "passed": true,
+                "weight": 2,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "I've read all the feedback and checked each finding against the code. Nothing has been edited, committed, or replied to yet.\n\n**What I read:** all 4 inline comments (2 from maria-k, 1 from liam-dev, 1 from acme-review-bot). There are 0 conversation comments, and all 3 review summaries are empty. The checkout is at `a2f3f07`, which matches `origin/feat/cancel-quotes`, so the line numbers below are the ones the reviewers saw. There's no `package.json`, `node_modules` or test suite in the repo, so I couldn't run anything. Every claim below comes from reading the code.\n\n---\n\n### 1. maria-k: `releaseBlocks` ignores PMS errors (`src/pms/client.ts:15`). **Correct, and worse than she says. Take it.**\n\n```text\nA guest cancels a 3-room-line quote. The PMS returns 500 on the 2nd release.\n  today:   DB says cancelled, API says 204, line 1 released, lines 2–3 still blocked. Nobody finds out.\n  naive fix (just throw):  DB still says cancelled (the update runs first, cancel.ts:11-15),\n           API says 500, client retries → line 1 is released a second time.\n```\n\n- `fetch` only rejects on network errors, never on 4xx/5xx, so she's right about the mechanism. `res.ok` is never checked (`client.ts:15-19`).\n- What she understated is the order of operations. `cancelQuote` writes `status = 'cancelled'` **before** it releases anything (`cancel.ts:11-16`). Throwing on a bad response alone still leaves the quote marked cancelled while its rooms are blocked. The fix she wants (\"fail the cancel\") also has to release first and write `cancelled` only after every release succeeds.\n- Partial failure across the loop is still possible after that. I'd accept it and make retries safe (see #5) rather than build compensation.\n- Unverified: whether a thrown error becomes a clean 500. Express 4 doesn't catch rejected async handlers, so the request would just hang. Express 5 does catch them. With no `package.json` I can't tell which version this is.\n- The same `fetch` bug exists in `reserveBlocks` (`client.ts:5`). That code predates this PR and nothing in the repo calls it, so I'd leave it alone.\n\n**Recommendation:** add a `res.ok` check that throws, and move the DB update after `releaseBlocks`. Small and contained.\n\n### 2. maria-k: typo `qoute` (`src/quotes/routes.ts:26`). **Correct. Fix it, it's one word.**\n\nOne catch: the message is probably never sent. `findQuote` uses `db.one` (`repository.ts:5`), and in pg-promise that throws when no row matches instead of returning nothing. So `if (!row)` never fires, and an unknown quote id gives a 500, not this 404. The GET route (`routes.ts:11`) has the same problem. That code predates this PR and I'd treat it as a follow-up (`db.oneOrNone`), but it means the cancel endpoint's 404 path is dead today. That's worth telling Maria.\n\n### 3. liam-dev: \"`update` has no `where`\" (`src/quotes/cancel.ts:12`). **Wrong. Reject politely.**\n\nThe query continues on the next line, `where id = $1` at `cancel.ts:13`, with `[id]` at `:14`. The comment's diff excerpt stops at line 12, which probably explains the misread. No change needed.\n\n### 4. acme-review-bot: add a `quote_events` audit table (`cancel.ts:11`). **A reasonable idea, but outside this PR. Decline.**\n\nThis would be a new table, a migration, writes on create, confirm and cancel (most of which don't live in this PR), and an actor identity. The route has no auth context (`routes.ts:24`), so there's no \"who\" to record. `cancelled_at` already covers \"when\". I'd reply that it's a fair idea and suggest a ticket.\n\n### 5. Not raised by anyone: cancelling twice releases the rooms twice. **I recommend taking it, alongside #1.**\n\n```text\nA client double-clicks Cancel, or retries after the 500 from #1.\n  today:  both calls pass (findQuote doesn't check status), both send releases to the PMS.\n```\n\n- `findQuote` doesn't read the new `status` column (`repository.ts:7-14`), and `cancelQuote` never checks it.\n- A release is identified only by `{roomType, rooms, nights, arrival}` (`blocks.ts:4-9`), not by a block id. Unverified: if the PMS treats a release as \"free N rooms of this type on this date\", the second release could free rooms that **another** quote is holding. Only the PMS API docs or the PMS team can confirm that.\n- A cheap guard: return early when the quote is already cancelled, and use `update … where id = $1 and status <> 'cancelled'`. The guard is also what makes the reordering in #1 safe to retry.\n- Counterpoint: this goes beyond what any reviewer asked for. But #1 introduces a retry path, so this is the other half of that fix rather than new scope.\n\n---\n\n**My proposal:** fix #1 (with the reordering), #2 and #5 in one commit, and reply to all four comments. For Liam's I'd point at line 13. For the bot's I'd decline as out of scope. Maria's reply would also mention the `db.one` 404 issue as a follow-up.\n\nTwo things would help from you:\n- Do you agree on #5?\n- Do you know whether this service runs Express 4 or 5? It decides whether #1 also needs a `try/catch` in the route."
+              }
+            ]
+          }
+        ]
+      },
+      "aggregates": {
+        "score": 0.7916666666666666,
+        "passRate": 0
+      }
+    },
+    {
+      "name": "review-pr-explain-concrete-finding",
+      "dir": "evals/review-pr/explain-concrete-finding",
+      "source": "mixed",
+      "promptMarkdown": "/review-powers:review-pr https://github.com/acme/hotel-api/pull/103",
+      "runsPerCase": 3,
+      "timeoutSeconds": 900,
+      "maxTurns": 40,
+      "graders": [
+        {
+          "name": "gate-no-writes",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": {
+              "source": "file",
+              "path": ".git/gh-calls.log"
+            },
+            "pattern": "^WRITE",
+            "flags": "m",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "no-block-for-concrete-finding",
+          "type": "llm",
+          "weight": 2,
+          "graderMarkdown": "The unknown-discount-code finding is already concrete: one input, one wrong\nresult. It should be explained in a sentence or two of plain text plus the\ncode location, without a `diff` block, call tree, sequence diagram or file\ntree for that finding. A short inline example (\"a quote saved with `SUMMER` now\nreturns a 500 instead of the full price\") is fine and welcome.\n\nPASS if that finding is explained that briefly with no diagram or code block.\nFAIL if that finding is accompanied by a diff, call tree, diagram or file tree,\nor if the finding is missing.",
+          "config": {
+            "criteria": "The unknown-discount-code finding is already concrete: one input, one wrong\nresult. It should be explained in a sentence or two of plain text plus the\ncode location, without a `diff` block, call tree, sequence diagram or file\ntree for that finding. A short inline example (\"a quote saved with `SUMMER` now\nreturns a 500 instead of the full price\") is fine and welcome.\n\nPASS if that finding is explained that briefly with no diagram or code block.\nFAIL if that finding is accompanied by a diff, call tree, diagram or file tree,\nor if the finding is missing.",
+            "focus": "last_message"
+          }
+        },
+        {
+          "name": "no-diagram",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "```mermaid",
+            "flags": "",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "no-preamble",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "^\\s*(sure|okay|ok,|great|here('s| is| are)|i('ve| have)? (reviewed|read|looked)|let me|i'll )",
+            "flags": "i",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "plain-language",
+          "type": "llm",
+          "weight": 2,
+          "graderMarkdown": "Judge only how the findings are written, not whether they are right.\n\nPASS if every finding in the reply:\n- says what it means for the behaviour in everyday words first, with any\n  technical name (field, file, function) after it, in backticks;\n- uses short sentences;\n- explains or avoids jargon a newcomer would not know (e.g. nullable, DTO,\n  stub, snapshot, rollout).\n\nFAIL if any finding leads with code identifiers or file paths before saying\nwhat happens, or relies on unexplained jargon.",
+          "config": {
+            "criteria": "Judge only how the findings are written, not whether they are right.\n\nPASS if every finding in the reply:\n- says what it means for the behaviour in everyday words first, with any\n  technical name (field, file, function) after it, in backticks;\n- uses short sentences;\n- explains or avoids jargon a newcomer would not know (e.g. nullable, DTO,\n  stub, snapshot, rollout).\n\nFAIL if any finding leads with code identifiers or file paths before saying\nwhat happens, or relies on unexplained jargon.",
+            "focus": "last_message"
+          }
+        },
+        {
+          "name": "reader-understands",
+          "type": "llm",
+          "weight": 3,
+          "graderMarkdown": "You are a reader who has never seen this codebase and can only read the reply.\n\nWhat actually goes wrong in this PR: before, any discount code other than\nLAUNCH10 was simply ignored. Now codes are looked up in a new table, and a code\nthat is not there (an old, mistyped or retired one already saved on quotes)\nmakes opening the quote fail with a server error instead of showing the price\nwithout discount.\n\nPASS if, from the reply alone, the reader would understand that a quote with\nan unknown discount code now fails to load (error) instead of just getting no\ndiscount.\n\nFAIL if this problem is missing, or is only described in code terms.",
+          "config": {
+            "criteria": "You are a reader who has never seen this codebase and can only read the reply.\n\nWhat actually goes wrong in this PR: before, any discount code other than\nLAUNCH10 was simply ignored. Now codes are looked up in a new table, and a code\nthat is not there (an old, mistyped or retired one already saved on quotes)\nmakes opening the quote fail with a server error instead of showing the price\nwithout discount.\n\nPASS if, from the reply alone, the reader would understand that a quote with\nan unknown discount code now fails to load (error) instead of just getting no\ndiscount.\n\nFAIL if this problem is missing, or is only described in code terms.",
+            "focus": "last_message"
+          }
+        }
+      ],
+      "arms": {
+        "with": [
+          {
+            "score": 0.6,
+            "passed": false,
+            "turns": 4,
+            "costUsd": 0.2236152,
+            "judgeCostUsd": 0.039096,
+            "durationSeconds": 47,
+            "startedAt": "2026-11-01T15:28:27.150Z",
+            "error": null,
+            "tracePath": "/private/tmp/e-J9Cy43/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "gate-no-writes",
+                "passed": true,
+                "weight": 1,
+                "explanation": "pattern absent as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "no-block-for-concrete-finding",
+                "passed": false,
+                "weight": 2,
+                "explanation": "judge votes: FAIL FAIL FAIL",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  false,
+                  false,
+                  false
+                ],
+                "evidence": "I'd request changes. There's one real bug and it's small to fix: any quote with a discount code that isn't in the new table now crashes the read instead of just going undiscounted. There's also one design question you should decide yourself, about whether old quotes' totals can change after they're issued.\n\n**What I read:** the PR description, the diff, and CI (lint and unit-tests pass). There are no reviews or comments yet, and it isn't stacked (base is `main`). I also read past the diff into the only caller (`src/quotes/routes.ts`), the quote repository and model, and `src/db.ts`. There's no `package.json` or test directory in the repo, so I couldn't check the Express version or what \"unit-tests\" actually runs.\n\n**Questions that came back empty:** I found nothing to raise on comment abuse (the PR removes a comment and adds none). It follows the existing patterns (`db.oneOrNone` with positional params, same shape as `findQuote`). There's nothing that could reasonably be simpler. This is a backend PR, so the frontend questions don't apply.\n\n## Findings\n\n**1. An unknown code now crashes the quote read. It used to just give no discount.** *(bug, should block)*\n```text\nquote.discount_code = 'SUMMER5'   (or 'launch10', or any old/mistyped code already in the quotes table)\n  before:  applyDiscount → code !== \"LAUNCH10\" → returns total unchanged → 200\n  after:   findCode → undefined → discount!.percent → TypeError → GET /api/v1/quotes/:id fails\n```\n`src/discounts/discounts.ts:19`. The `!` hides the `undefined` that `findCode` deliberately returns. `discount_code` is already stored on existing quotes (`src/quotes/repository.ts:13`), so any row whose code isn't `LAUNCH10` breaks on the first read after deploy. Deleting a code from the table later would break every quote that used it. The handler is `async` with no try/catch (`src/quotes/routes.ts:12`). Depending on the Express version, the result is a hung request (Express 4) or a 500 (Express 5). I couldn't check which, since there's no `package.json` in the repo.\nFix: `if (!discount) return total;`. It's one line.\n**My recommendation:** inline comment, request changes.\n\n**2. Deploy order: the code needs the table before it goes live.** *(deploy)*\n```text\nnew pods serve before 0043 has run → \"relation discount_codes does not exist\" → every quote with a code fails\n```\nOld and new versions can run side by side (old code never touches the table), so the only risk is ordering. Nothing in the PR says the migration runs before rollout, and the repo has no migration runner I could check. If your pipeline already runs migrations as a pre-deploy step, this is a non-issue. **My recommendation:** a short question to the author, not a blocker.\n\n**3. Design call for you: discounts are applied when the quote is read, not when it's issued.** *(needs a human decision)*\n```text\nquote issued with LAUNCH10 at 10%  →  marketing edits LAUNCH10 to 15%  →  that customer's quote total silently drops\nmarketing deletes LAUNCH10          →  with finding 1 fixed, the discount disappears from issued quotes; without the fix, they crash\n```\nThe point of the PR is that marketing can change codes without a deploy. But `total` is recomputed on every GET, so those changes also apply retroactively to quotes customers already hold. That was harmless while the code was hardcoded. Whether an issued quote should keep its price is a product rule, not something I can settle from the code. If it should, the fix is to save the percent (or the discounted total) on the quote, or to make codes immutable and expire them instead of deleting them. **My recommendation:** you decide; I'd raise it as a non-blocking design comment.\n\n**4. No tests cover this.** *(coverage)*\nThe repo has no test files, so the green \"unit-tests\" check proves nothing about this change. The cases that matter are a known code, an unknown code (finding 1), and no code. Since the behaviour now depends on the database, they need an integration-level test against the real table. Mocking `findCode` would miss the type mismatch in finding 5. **My recommendation:** ask for tests in the same comment as finding 1.\n\n**5. Minor: `percent` is a Postgres `numeric`, which pg-promise returns as a string.** *(low)*\n`DiscountCode.percent: number` is wrong at runtime (`\"10\"`). `\"10\" / 100` works only because JS converts the string to a number. A later `percent + something` would join strings instead of adding. Fix: `percent::float8` in the select, or `Number(row.percent)`. **My recommendation:** optional nit; fold it into the finding 1 comment or skip it.\n\nOutside this PR: `findQuote` uses `db.one`, which throws when no row is found, so its `if (!row)` 404 branch can never run. That code predates this PR and isn't part of the diff, so I wouldn't comment on it here. It might be worth a separate ticket.\n\n**Overall:** request changes on finding 1, with findings 4 and 5 as optional add-ons in the same comment. Ask about finding 2, and post finding 3 as a design question if you agree it's open. The inline comment for finding 1 would go on `src/discounts/discounts.ts:19` in the PR head (`4b063db`), the `return total * (1 - discount!.percent / 100);` line; I'll confirm it landed there after posting.\n\nWhich of these do you want posted, and as a comment or a request for changes?"
+              },
+              {
+                "name": "no-diagram",
+                "passed": true,
+                "weight": 1,
+                "explanation": "pattern absent as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "no-preamble",
+                "passed": true,
+                "weight": 1,
+                "explanation": "pattern absent as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "plain-language",
+                "passed": false,
+                "weight": 2,
+                "explanation": "judge votes: FAIL FAIL FAIL",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  false,
+                  false,
+                  false
+                ],
+                "evidence": "I'd request changes. There's one real bug and it's small to fix: any quote with a discount code that isn't in the new table now crashes the read instead of just going undiscounted. There's also one design question you should decide yourself, about whether old quotes' totals can change after they're issued.\n\n**What I read:** the PR description, the diff, and CI (lint and unit-tests pass). There are no reviews or comments yet, and it isn't stacked (base is `main`). I also read past the diff into the only caller (`src/quotes/routes.ts`), the quote repository and model, and `src/db.ts`. There's no `package.json` or test directory in the repo, so I couldn't check the Express version or what \"unit-tests\" actually runs.\n\n**Questions that came back empty:** I found nothing to raise on comment abuse (the PR removes a comment and adds none). It follows the existing patterns (`db.oneOrNone` with positional params, same shape as `findQuote`). There's nothing that could reasonably be simpler. This is a backend PR, so the frontend questions don't apply.\n\n## Findings\n\n**1. An unknown code now crashes the quote read. It used to just give no discount.** *(bug, should block)*\n```text\nquote.discount_code = 'SUMMER5'   (or 'launch10', or any old/mistyped code already in the quotes table)\n  before:  applyDiscount → code !== \"LAUNCH10\" → returns total unchanged → 200\n  after:   findCode → undefined → discount!.percent → TypeError → GET /api/v1/quotes/:id fails\n```\n`src/discounts/discounts.ts:19`. The `!` hides the `undefined` that `findCode` deliberately returns. `discount_code` is already stored on existing quotes (`src/quotes/repository.ts:13`), so any row whose code isn't `LAUNCH10` breaks on the first read after deploy. Deleting a code from the table later would break every quote that used it. The handler is `async` with no try/catch (`src/quotes/routes.ts:12`). Depending on the Express version, the result is a hung request (Express 4) or a 500 (Express 5). I couldn't check which, since there's no `package.json` in the repo.\nFix: `if (!discount) return total;`. It's one line.\n**My recommendation:** inline comment, request changes.\n\n**2. Deploy order: the code needs the table before it goes live.** *(deploy)*\n```text\nnew pods serve before 0043 has run → \"relation discount_codes does not exist\" → every quote with a code fails\n```\nOld and new versions can run side by side (old code never touches the table), so the only risk is ordering. Nothing in the PR says the migration runs before rollout, and the repo has no migration runner I could check. If your pipeline already runs migrations as a pre-deploy step, this is a non-issue. **My recommendation:** a short question to the author, not a blocker.\n\n**3. Design call for you: discounts are applied when the quote is read, not when it's issued.** *(needs a human decision)*\n```text\nquote issued with LAUNCH10 at 10%  →  marketing edits LAUNCH10 to 15%  →  that customer's quote total silently drops\nmarketing deletes LAUNCH10          →  with finding 1 fixed, the discount disappears from issued quotes; without the fix, they crash\n```\nThe point of the PR is that marketing can change codes without a deploy. But `total` is recomputed on every GET, so those changes also apply retroactively to quotes customers already hold. That was harmless while the code was hardcoded. Whether an issued quote should keep its price is a product rule, not something I can settle from the code. If it should, the fix is to save the percent (or the discounted total) on the quote, or to make codes immutable and expire them instead of deleting them. **My recommendation:** you decide; I'd raise it as a non-blocking design comment.\n\n**4. No tests cover this.** *(coverage)*\nThe repo has no test files, so the green \"unit-tests\" check proves nothing about this change. The cases that matter are a known code, an unknown code (finding 1), and no code. Since the behaviour now depends on the database, they need an integration-level test against the real table. Mocking `findCode` would miss the type mismatch in finding 5. **My recommendation:** ask for tests in the same comment as finding 1.\n\n**5. Minor: `percent` is a Postgres `numeric`, which pg-promise returns as a string.** *(low)*\n`DiscountCode.percent: number` is wrong at runtime (`\"10\"`). `\"10\" / 100` works only because JS converts the string to a number. A later `percent + something` would join strings instead of adding. Fix: `percent::float8` in the select, or `Number(row.percent)`. **My recommendation:** optional nit; fold it into the finding 1 comment or skip it.\n\nOutside this PR: `findQuote` uses `db.one`, which throws when no row is found, so its `if (!row)` 404 branch can never run. That code predates this PR and isn't part of the diff, so I wouldn't comment on it here. It might be worth a separate ticket.\n\n**Overall:** request changes on finding 1, with findings 4 and 5 as optional add-ons in the same comment. Ask about finding 2, and post finding 3 as a design question if you agree it's open. The inline comment for finding 1 would go on `src/discounts/discounts.ts:19` in the PR head (`4b063db`), the `return total * (1 - discount!.percent / 100);` line; I'll confirm it landed there after posting.\n\nWhich of these do you want posted, and as a comment or a request for changes?"
+              },
+              {
+                "name": "reader-understands",
+                "passed": true,
+                "weight": 3,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "I'd request changes. There's one real bug and it's small to fix: any quote with a discount code that isn't in the new table now crashes the read instead of just going undiscounted. There's also one design question you should decide yourself, about whether old quotes' totals can change after they're issued.\n\n**What I read:** the PR description, the diff, and CI (lint and unit-tests pass). There are no reviews or comments yet, and it isn't stacked (base is `main`). I also read past the diff into the only caller (`src/quotes/routes.ts`), the quote repository and model, and `src/db.ts`. There's no `package.json` or test directory in the repo, so I couldn't check the Express version or what \"unit-tests\" actually runs.\n\n**Questions that came back empty:** I found nothing to raise on comment abuse (the PR removes a comment and adds none). It follows the existing patterns (`db.oneOrNone` with positional params, same shape as `findQuote`). There's nothing that could reasonably be simpler. This is a backend PR, so the frontend questions don't apply.\n\n## Findings\n\n**1. An unknown code now crashes the quote read. It used to just give no discount.** *(bug, should block)*\n```text\nquote.discount_code = 'SUMMER5'   (or 'launch10', or any old/mistyped code already in the quotes table)\n  before:  applyDiscount → code !== \"LAUNCH10\" → returns total unchanged → 200\n  after:   findCode → undefined → discount!.percent → TypeError → GET /api/v1/quotes/:id fails\n```\n`src/discounts/discounts.ts:19`. The `!` hides the `undefined` that `findCode` deliberately returns. `discount_code` is already stored on existing quotes (`src/quotes/repository.ts:13`), so any row whose code isn't `LAUNCH10` breaks on the first read after deploy. Deleting a code from the table later would break every quote that used it. The handler is `async` with no try/catch (`src/quotes/routes.ts:12`). Depending on the Express version, the result is a hung request (Express 4) or a 500 (Express 5). I couldn't check which, since there's no `package.json` in the repo.\nFix: `if (!discount) return total;`. It's one line.\n**My recommendation:** inline comment, request changes.\n\n**2. Deploy order: the code needs the table before it goes live.** *(deploy)*\n```text\nnew pods serve before 0043 has run → \"relation discount_codes does not exist\" → every quote with a code fails\n```\nOld and new versions can run side by side (old code never touches the table), so the only risk is ordering. Nothing in the PR says the migration runs before rollout, and the repo has no migration runner I could check. If your pipeline already runs migrations as a pre-deploy step, this is a non-issue. **My recommendation:** a short question to the author, not a blocker.\n\n**3. Design call for you: discounts are applied when the quote is read, not when it's issued.** *(needs a human decision)*\n```text\nquote issued with LAUNCH10 at 10%  →  marketing edits LAUNCH10 to 15%  →  that customer's quote total silently drops\nmarketing deletes LAUNCH10          →  with finding 1 fixed, the discount disappears from issued quotes; without the fix, they crash\n```\nThe point of the PR is that marketing can change codes without a deploy. But `total` is recomputed on every GET, so those changes also apply retroactively to quotes customers already hold. That was harmless while the code was hardcoded. Whether an issued quote should keep its price is a product rule, not something I can settle from the code. If it should, the fix is to save the percent (or the discounted total) on the quote, or to make codes immutable and expire them instead of deleting them. **My recommendation:** you decide; I'd raise it as a non-blocking design comment.\n\n**4. No tests cover this.** *(coverage)*\nThe repo has no test files, so the green \"unit-tests\" check proves nothing about this change. The cases that matter are a known code, an unknown code (finding 1), and no code. Since the behaviour now depends on the database, they need an integration-level test against the real table. Mocking `findCode` would miss the type mismatch in finding 5. **My recommendation:** ask for tests in the same comment as finding 1.\n\n**5. Minor: `percent` is a Postgres `numeric`, which pg-promise returns as a string.** *(low)*\n`DiscountCode.percent: number` is wrong at runtime (`\"10\"`). `\"10\" / 100` works only because JS converts the string to a number. A later `percent + something` would join strings instead of adding. Fix: `percent::float8` in the select, or `Number(row.percent)`. **My recommendation:** optional nit; fold it into the finding 1 comment or skip it.\n\nOutside this PR: `findQuote` uses `db.one`, which throws when no row is found, so its `if (!row)` 404 branch can never run. That code predates this PR and isn't part of the diff, so I wouldn't comment on it here. It might be worth a separate ticket.\n\n**Overall:** request changes on finding 1, with findings 4 and 5 as optional add-ons in the same comment. Ask about finding 2, and post finding 3 as a design question if you agree it's open. The inline comment for finding 1 would go on `src/discounts/discounts.ts:19` in the PR head (`4b063db`), the `return total * (1 - discount!.percent / 100);` line; I'll confirm it landed there after posting.\n\nWhich of these do you want posted, and as a comment or a request for changes?"
+              }
+            ]
+          }
+        ]
+      },
+      "aggregates": {
+        "score": 0.6,
+        "passRate": 0
+      }
+    },
+    {
+      "name": "review-pr-explain-contract-change",
+      "dir": "evals/review-pr/explain-contract-change",
+      "source": "mixed",
+      "promptMarkdown": "/review-powers:review-pr https://github.com/acme/hotel-api/pull/101",
+      "runsPerCase": 3,
+      "timeoutSeconds": 900,
+      "maxTurns": 40,
+      "graders": [
+        {
+          "name": "diff-lines-well-formed",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "```diff\\n(?:[ +-][^\\n]*\\n)*(?!```)[^ +\\-\\n]",
+            "flags": "",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "diff-not-raw-json",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "```diff\\n[^`]*?\\n[ +-]\\s*(\"\\w+\"\\s*:|[{\\[]\\s*$)",
+            "flags": "m",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "gate-no-writes",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": {
+              "source": "file",
+              "path": ".git/gh-calls.log"
+            },
+            "pattern": "^WRITE",
+            "flags": "m",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "has-diff-block",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "```diff\\n",
+            "flags": "",
+            "match": "contains"
+          }
+        },
+        {
+          "name": "no-diagram",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "```mermaid",
+            "flags": "",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "no-preamble",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "^\\s*(sure|okay|ok,|great|here('s| is| are)|i('ve| have)? (reviewed|read|looked)|let me|i'll )",
+            "flags": "i",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "plain-language",
+          "type": "llm",
+          "weight": 2,
+          "graderMarkdown": "Judge only how the findings are written, not whether they are right.\n\nPASS if every finding in the reply:\n- says what it means for the behaviour in everyday words first, with any\n  technical name (field, file, function) after it, in backticks;\n- uses short sentences;\n- explains or avoids jargon a newcomer would not know (e.g. nullable, DTO,\n  stub, snapshot, rollout).\n\nFAIL if any finding leads with code identifiers or file paths before saying\nwhat happens, or relies on unexplained jargon.",
+          "config": {
+            "criteria": "Judge only how the findings are written, not whether they are right.\n\nPASS if every finding in the reply:\n- says what it means for the behaviour in everyday words first, with any\n  technical name (field, file, function) after it, in backticks;\n- uses short sentences;\n- explains or avoids jargon a newcomer would not know (e.g. nullable, DTO,\n  stub, snapshot, rollout).\n\nFAIL if any finding leads with code identifiers or file paths before saying\nwhat happens, or relies on unexplained jargon.",
+            "focus": "last_message"
+          }
+        },
+        {
+          "name": "reader-understands",
+          "type": "llm",
+          "weight": 3,
+          "graderMarkdown": "You are a reader who has never seen this codebase and can only read the reply.\n\nWhat actually goes wrong in this PR: new quotes no longer store a precomputed\ntotal, so it is empty (null) for them. Invoice generation, in code the PR does\nnot touch, still reads that total and formats it as a number, so building the\ninvoice for any quote created after this deploy fails with an error.\n\nPASS if, from the reply alone, the reader would understand that invoices break\nfor quotes created after the deploy, and why (the total they read is now\nempty). The reply may use different words or field names; what matters is\nthat the consequence for the business is clear without opening the code.\n\nFAIL if this problem is missing, or if understanding it requires knowing the\ncode (e.g. it only says \"`legacyTotal` is nullable, `invoice-builder.ts:16`\ncalls `toFixed`\" with no plain explanation of what happens to whom).",
+          "config": {
+            "criteria": "You are a reader who has never seen this codebase and can only read the reply.\n\nWhat actually goes wrong in this PR: new quotes no longer store a precomputed\ntotal, so it is empty (null) for them. Invoice generation, in code the PR does\nnot touch, still reads that total and formats it as a number, so building the\ninvoice for any quote created after this deploy fails with an error.\n\nPASS if, from the reply alone, the reader would understand that invoices break\nfor quotes created after the deploy, and why (the total they read is now\nempty). The reply may use different words or field names; what matters is\nthat the consequence for the business is clear without opening the code.\n\nFAIL if this problem is missing, or if understanding it requires knowing the\ncode (e.g. it only says \"`legacyTotal` is nullable, `invoice-builder.ts:16`\ncalls `toFixed`\" with no plain explanation of what happens to whom).",
+            "focus": "last_message"
+          }
+        },
+        {
+          "name": "shape-as-diff",
+          "type": "llm",
+          "weight": 2,
+          "graderMarkdown": "PASS if the change to what the quote endpoint returns is shown as a `diff`\ncode block of the response *shape*: field names with their types and whether\nthey can be empty, unchanged lines starting with a space, added with `+`,\nchanged or removed with `-`. For example:\n\n```diff\n GET /api/v1/quotes/{quoteId}\n   response Quote\n+    accommodationBlocks: AccommodationBlock[]  (required)\n-    legacyTotal: number\n+    legacyTotal: number | null\n```\n\nFAIL if the shape change is only described in prose, shown as raw JSON or as\nthe TypeScript source diff, or not shown at all.",
+          "config": {
+            "criteria": "PASS if the change to what the quote endpoint returns is shown as a `diff`\ncode block of the response *shape*: field names with their types and whether\nthey can be empty, unchanged lines starting with a space, added with `+`,\nchanged or removed with `-`. For example:\n\n```diff\n GET /api/v1/quotes/{quoteId}\n   response Quote\n+    accommodationBlocks: AccommodationBlock[]  (required)\n-    legacyTotal: number\n+    legacyTotal: number | null\n```\n\nFAIL if the shape change is only described in prose, shown as raw JSON or as\nthe TypeScript source diff, or not shown at all.",
+            "focus": "last_message"
+          }
+        }
+      ],
+      "arms": {
+        "with": [
+          {
+            "score": 0.38461538461538464,
+            "passed": false,
+            "turns": 5,
+            "costUsd": 0.283791,
+            "judgeCostUsd": 0.044346,
+            "durationSeconds": 60,
+            "startedAt": "2026-11-01T15:29:14.280Z",
+            "error": null,
+            "tracePath": "/private/tmp/e-doUGLc/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "diff-lines-well-formed",
+                "passed": true,
+                "weight": 1,
+                "explanation": "pattern absent as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "diff-not-raw-json",
+                "passed": true,
+                "weight": 1,
+                "explanation": "pattern absent as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "gate-no-writes",
+                "passed": true,
+                "weight": 1,
+                "explanation": "pattern absent as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "has-diff-block",
+                "passed": false,
+                "weight": 1,
+                "explanation": "pattern not found in last_message",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "no-diagram",
+                "passed": true,
+                "weight": 1,
+                "explanation": "pattern absent as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "no-preamble",
+                "passed": true,
+                "weight": 1,
+                "explanation": "pattern absent as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "plain-language",
+                "passed": false,
+                "weight": 2,
+                "explanation": "judge votes: FAIL FAIL FAIL",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  false,
+                  false,
+                  false
+                ],
+                "evidence": "**Verdict: request changes.** The code that reads quotes is fine and won't change totals for existing quotes. The problem is that making `legacyTotal` nullable breaks invoicing, and that code isn't in the diff. The description also says something the diff doesn't do.\n\n**What I covered**\n- **Feeds read:** the description (I checked its claims), CI (only `lint` and `unit-tests`, both green), reviews and comments (none, no prior reviewer), stacking (based on `main`, one commit, not stacked).\n- **Beyond the diff:** I checked out the PR and read every file that uses `Quote`: `invoicing/invoice-builder.ts`, `pms/blocks.ts`, `discounts`, `db`.\n- **Not in the repo at all:** tests, `package.json`, `tsconfig`. So I can't tell what the green `unit-tests` job actually runs.\n- **Backend PR.** The questions about frontend behaviour don't apply.\n- **Answered:** business-logic bug, deploy, design, tests, simplicity.\n- **Looked at, nothing found:** patterns (the repository mapping matches what's there) and comments (the one on `legacyTotal` is useful, the migration comment is fine).\n\n## Findings\n\n**1. Invoicing crashes on any quote without a stored `legacy_total`.** *Blocker.*\n```text\nquote created under the new rule → legacy_total = NULL\nbuildInvoice(id) → quote.legacyTotal.toFixed(2)\n                 → TypeError: Cannot read properties of null\n```\n`src/invoicing/invoice-builder.ts:16` still treats `legacyTotal` as a number. The PR changes the type to `number | null` (`src/quotes/quote.ts:23`), so this should also fail type-checking. CI only runs lint and unit tests, and I can't see a type-check step, so the break would most likely get merged unnoticed. The invoice also sums a different number than the API's `total`: `legacyTotal` has no discount applied, `total` does. Moving the invoice to the derived total is the obvious fix, but whether invoices should include the discount is a business decision for you. That gap already exists today; this change just makes you choose.\n**Recommendation:** inline comment. It's cheap to fix and has to be fixed before merge.\n\n**2. \"New quotes no longer store `legacy_total`\" isn't in this PR.** *Ask.*\nNothing in this repo writes quotes. The diff only makes the column nullable (`migrations/0042_…sql`) and changes how quotes are read. So whatever stops writing `legacy_total` lives in another service or another PR. That matters for deploy order: once that writer ships, every invoice for a new quote hits finding 1, including on pods still running old code. Ask the author where the write change is and confirm it ships after this PR (and after finding 1 is fixed).\n**Recommendation:** a question in the PR comment, not a line comment.\n\n**3. `legacyTotal` in the public `/api/v1` response can now be `null`, with no deprecation path.** *Design call for you.*\n```text\nv1 consumer today:  response.legacyTotal.toFixed(2) → works\nafter writer ships: legacyTotal = null for new quotes → consumer breaks\n```\nThe description tells clients to \"move to `accommodationBlocks`\", but blocks don't give a total. The real replacement is `total`, and that one includes the discount, which `legacyTotal` doesn't. You know who consumes v1; I don't. Someone needs to check whether any client reads `legacyTotal`, and whether the migration advice should say \"use `total`\" (and mention the discount difference).\n**Recommendation:** raise it in the PR comment and check the consumers yourself.\n\n**4. \"Accommodation block\" clashes with an existing meaning of \"block\".** *Design call for you.*\n`src/pms/blocks.ts` already uses \"blocks\" for PMS availability blocks: one per room line, `{rooms, nights}`. The new `AccommodationBlock` is also one per room line but has a different shape, `{roomNights, amount}`. Both names now sit in the same domain, and one goes into a public API. In hotel terms, \"block\" usually means rooms held aside (an allotment), not a priced line. Renaming is cheap now and expensive once clients depend on the field. Your call whether the name is right.\n**Recommendation:** a short line comment on `quote.ts:10`.\n\n**5. `accommodationBlocks` is stored on `Quote` even though it can always be computed from `rooms`.** *Simplify, optional.*\n```text\nnow:     Quote { rooms, accommodationBlocks }  // both must stay in sync\nsimpler: Quote { rooms }; route returns toAccommodationBlocks(quote.rooms)\n```\nNothing is persisted. The repository works it out on every read (`repository.ts:12`), and `quoteTotal` now goes through it. That means anyone who builds a `Quote` some other way, in tests or future write paths, has to keep the two fields in sync. \"No behaviour change for existing quotes\" does hold: the math is identical.\n**Recommendation:** a low-priority line comment. Fine to skip.\n\n**6. There are no tests to catch any of this.** *Tests.*\nThere are no test files in the repo and the PR adds none. The acceptance criteria that matter aren't covered: the response shape, totals unchanged for existing quotes, and invoicing a quote with a null `legacy_total`. An invoice test with a null `legacy_total` would have caught finding 1. A type-check step in CI would too.\n**Recommendation:** fold this into the review comment and ask for at least that invoice test.\n\n**Suggested review:** request changes, because of findings 1 and 2. Findings 3, 4 and 6 go in the review body, 4 and 5 as inline comments.\n\n**Where inline comments can go:** `invoice-builder.ts` isn't in the diff, so GitHub won't accept a line comment there. I'd put finding 1 on `src/quotes/quote.ts:23` (the `legacyTotal: number | null` line) and point to `invoice-builder.ts:16` in the text. Finding 4 would go on `quote.ts:10`, finding 5 on `repository.ts:12`.\n\nWhich do you want posted, ignored, or reworded? Nothing has been posted yet."
+              },
+              {
+                "name": "reader-understands",
+                "passed": false,
+                "weight": 3,
+                "explanation": "judge votes: FAIL FAIL FAIL",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  false,
+                  false,
+                  false
+                ],
+                "evidence": "**Verdict: request changes.** The code that reads quotes is fine and won't change totals for existing quotes. The problem is that making `legacyTotal` nullable breaks invoicing, and that code isn't in the diff. The description also says something the diff doesn't do.\n\n**What I covered**\n- **Feeds read:** the description (I checked its claims), CI (only `lint` and `unit-tests`, both green), reviews and comments (none, no prior reviewer), stacking (based on `main`, one commit, not stacked).\n- **Beyond the diff:** I checked out the PR and read every file that uses `Quote`: `invoicing/invoice-builder.ts`, `pms/blocks.ts`, `discounts`, `db`.\n- **Not in the repo at all:** tests, `package.json`, `tsconfig`. So I can't tell what the green `unit-tests` job actually runs.\n- **Backend PR.** The questions about frontend behaviour don't apply.\n- **Answered:** business-logic bug, deploy, design, tests, simplicity.\n- **Looked at, nothing found:** patterns (the repository mapping matches what's there) and comments (the one on `legacyTotal` is useful, the migration comment is fine).\n\n## Findings\n\n**1. Invoicing crashes on any quote without a stored `legacy_total`.** *Blocker.*\n```text\nquote created under the new rule → legacy_total = NULL\nbuildInvoice(id) → quote.legacyTotal.toFixed(2)\n                 → TypeError: Cannot read properties of null\n```\n`src/invoicing/invoice-builder.ts:16` still treats `legacyTotal` as a number. The PR changes the type to `number | null` (`src/quotes/quote.ts:23`), so this should also fail type-checking. CI only runs lint and unit tests, and I can't see a type-check step, so the break would most likely get merged unnoticed. The invoice also sums a different number than the API's `total`: `legacyTotal` has no discount applied, `total` does. Moving the invoice to the derived total is the obvious fix, but whether invoices should include the discount is a business decision for you. That gap already exists today; this change just makes you choose.\n**Recommendation:** inline comment. It's cheap to fix and has to be fixed before merge.\n\n**2. \"New quotes no longer store `legacy_total`\" isn't in this PR.** *Ask.*\nNothing in this repo writes quotes. The diff only makes the column nullable (`migrations/0042_…sql`) and changes how quotes are read. So whatever stops writing `legacy_total` lives in another service or another PR. That matters for deploy order: once that writer ships, every invoice for a new quote hits finding 1, including on pods still running old code. Ask the author where the write change is and confirm it ships after this PR (and after finding 1 is fixed).\n**Recommendation:** a question in the PR comment, not a line comment.\n\n**3. `legacyTotal` in the public `/api/v1` response can now be `null`, with no deprecation path.** *Design call for you.*\n```text\nv1 consumer today:  response.legacyTotal.toFixed(2) → works\nafter writer ships: legacyTotal = null for new quotes → consumer breaks\n```\nThe description tells clients to \"move to `accommodationBlocks`\", but blocks don't give a total. The real replacement is `total`, and that one includes the discount, which `legacyTotal` doesn't. You know who consumes v1; I don't. Someone needs to check whether any client reads `legacyTotal`, and whether the migration advice should say \"use `total`\" (and mention the discount difference).\n**Recommendation:** raise it in the PR comment and check the consumers yourself.\n\n**4. \"Accommodation block\" clashes with an existing meaning of \"block\".** *Design call for you.*\n`src/pms/blocks.ts` already uses \"blocks\" for PMS availability blocks: one per room line, `{rooms, nights}`. The new `AccommodationBlock` is also one per room line but has a different shape, `{roomNights, amount}`. Both names now sit in the same domain, and one goes into a public API. In hotel terms, \"block\" usually means rooms held aside (an allotment), not a priced line. Renaming is cheap now and expensive once clients depend on the field. Your call whether the name is right.\n**Recommendation:** a short line comment on `quote.ts:10`.\n\n**5. `accommodationBlocks` is stored on `Quote` even though it can always be computed from `rooms`.** *Simplify, optional.*\n```text\nnow:     Quote { rooms, accommodationBlocks }  // both must stay in sync\nsimpler: Quote { rooms }; route returns toAccommodationBlocks(quote.rooms)\n```\nNothing is persisted. The repository works it out on every read (`repository.ts:12`), and `quoteTotal` now goes through it. That means anyone who builds a `Quote` some other way, in tests or future write paths, has to keep the two fields in sync. \"No behaviour change for existing quotes\" does hold: the math is identical.\n**Recommendation:** a low-priority line comment. Fine to skip.\n\n**6. There are no tests to catch any of this.** *Tests.*\nThere are no test files in the repo and the PR adds none. The acceptance criteria that matter aren't covered: the response shape, totals unchanged for existing quotes, and invoicing a quote with a null `legacy_total`. An invoice test with a null `legacy_total` would have caught finding 1. A type-check step in CI would too.\n**Recommendation:** fold this into the review comment and ask for at least that invoice test.\n\n**Suggested review:** request changes, because of findings 1 and 2. Findings 3, 4 and 6 go in the review body, 4 and 5 as inline comments.\n\n**Where inline comments can go:** `invoice-builder.ts` isn't in the diff, so GitHub won't accept a line comment there. I'd put finding 1 on `src/quotes/quote.ts:23` (the `legacyTotal: number | null` line) and point to `invoice-builder.ts:16` in the text. Finding 4 would go on `quote.ts:10`, finding 5 on `repository.ts:12`.\n\nWhich do you want posted, ignored, or reworded? Nothing has been posted yet."
+              },
+              {
+                "name": "shape-as-diff",
+                "passed": false,
+                "weight": 2,
+                "explanation": "judge votes: FAIL FAIL FAIL",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  false,
+                  false,
+                  false
+                ],
+                "evidence": "**Verdict: request changes.** The code that reads quotes is fine and won't change totals for existing quotes. The problem is that making `legacyTotal` nullable breaks invoicing, and that code isn't in the diff. The description also says something the diff doesn't do.\n\n**What I covered**\n- **Feeds read:** the description (I checked its claims), CI (only `lint` and `unit-tests`, both green), reviews and comments (none, no prior reviewer), stacking (based on `main`, one commit, not stacked).\n- **Beyond the diff:** I checked out the PR and read every file that uses `Quote`: `invoicing/invoice-builder.ts`, `pms/blocks.ts`, `discounts`, `db`.\n- **Not in the repo at all:** tests, `package.json`, `tsconfig`. So I can't tell what the green `unit-tests` job actually runs.\n- **Backend PR.** The questions about frontend behaviour don't apply.\n- **Answered:** business-logic bug, deploy, design, tests, simplicity.\n- **Looked at, nothing found:** patterns (the repository mapping matches what's there) and comments (the one on `legacyTotal` is useful, the migration comment is fine).\n\n## Findings\n\n**1. Invoicing crashes on any quote without a stored `legacy_total`.** *Blocker.*\n```text\nquote created under the new rule → legacy_total = NULL\nbuildInvoice(id) → quote.legacyTotal.toFixed(2)\n                 → TypeError: Cannot read properties of null\n```\n`src/invoicing/invoice-builder.ts:16` still treats `legacyTotal` as a number. The PR changes the type to `number | null` (`src/quotes/quote.ts:23`), so this should also fail type-checking. CI only runs lint and unit tests, and I can't see a type-check step, so the break would most likely get merged unnoticed. The invoice also sums a different number than the API's `total`: `legacyTotal` has no discount applied, `total` does. Moving the invoice to the derived total is the obvious fix, but whether invoices should include the discount is a business decision for you. That gap already exists today; this change just makes you choose.\n**Recommendation:** inline comment. It's cheap to fix and has to be fixed before merge.\n\n**2. \"New quotes no longer store `legacy_total`\" isn't in this PR.** *Ask.*\nNothing in this repo writes quotes. The diff only makes the column nullable (`migrations/0042_…sql`) and changes how quotes are read. So whatever stops writing `legacy_total` lives in another service or another PR. That matters for deploy order: once that writer ships, every invoice for a new quote hits finding 1, including on pods still running old code. Ask the author where the write change is and confirm it ships after this PR (and after finding 1 is fixed).\n**Recommendation:** a question in the PR comment, not a line comment.\n\n**3. `legacyTotal` in the public `/api/v1` response can now be `null`, with no deprecation path.** *Design call for you.*\n```text\nv1 consumer today:  response.legacyTotal.toFixed(2) → works\nafter writer ships: legacyTotal = null for new quotes → consumer breaks\n```\nThe description tells clients to \"move to `accommodationBlocks`\", but blocks don't give a total. The real replacement is `total`, and that one includes the discount, which `legacyTotal` doesn't. You know who consumes v1; I don't. Someone needs to check whether any client reads `legacyTotal`, and whether the migration advice should say \"use `total`\" (and mention the discount difference).\n**Recommendation:** raise it in the PR comment and check the consumers yourself.\n\n**4. \"Accommodation block\" clashes with an existing meaning of \"block\".** *Design call for you.*\n`src/pms/blocks.ts` already uses \"blocks\" for PMS availability blocks: one per room line, `{rooms, nights}`. The new `AccommodationBlock` is also one per room line but has a different shape, `{roomNights, amount}`. Both names now sit in the same domain, and one goes into a public API. In hotel terms, \"block\" usually means rooms held aside (an allotment), not a priced line. Renaming is cheap now and expensive once clients depend on the field. Your call whether the name is right.\n**Recommendation:** a short line comment on `quote.ts:10`.\n\n**5. `accommodationBlocks` is stored on `Quote` even though it can always be computed from `rooms`.** *Simplify, optional.*\n```text\nnow:     Quote { rooms, accommodationBlocks }  // both must stay in sync\nsimpler: Quote { rooms }; route returns toAccommodationBlocks(quote.rooms)\n```\nNothing is persisted. The repository works it out on every read (`repository.ts:12`), and `quoteTotal` now goes through it. That means anyone who builds a `Quote` some other way, in tests or future write paths, has to keep the two fields in sync. \"No behaviour change for existing quotes\" does hold: the math is identical.\n**Recommendation:** a low-priority line comment. Fine to skip.\n\n**6. There are no tests to catch any of this.** *Tests.*\nThere are no test files in the repo and the PR adds none. The acceptance criteria that matter aren't covered: the response shape, totals unchanged for existing quotes, and invoicing a quote with a null `legacy_total`. An invoice test with a null `legacy_total` would have caught finding 1. A type-check step in CI would too.\n**Recommendation:** fold this into the review comment and ask for at least that invoice test.\n\n**Suggested review:** request changes, because of findings 1 and 2. Findings 3, 4 and 6 go in the review body, 4 and 5 as inline comments.\n\n**Where inline comments can go:** `invoice-builder.ts` isn't in the diff, so GitHub won't accept a line comment there. I'd put finding 1 on `src/quotes/quote.ts:23` (the `legacyTotal: number | null` line) and point to `invoice-builder.ts:16` in the text. Finding 4 would go on `quote.ts:10`, finding 5 on `repository.ts:12`.\n\nWhich do you want posted, ignored, or reworded? Nothing has been posted yet."
+              }
+            ]
+          }
+        ]
+      },
+      "aggregates": {
+        "score": 0.38461538461538464,
+        "passRate": 0
+      }
+    },
+    {
+      "name": "review-pr-explain-with-example",
+      "dir": "evals/review-pr/explain-with-example",
+      "source": "mixed",
+      "promptMarkdown": "/review-powers:review-pr https://github.com/acme/hotel-api/pull/102",
+      "runsPerCase": 3,
+      "timeoutSeconds": 900,
+      "maxTurns": 40,
+      "graders": [
+        {
+          "name": "concrete-example",
+          "type": "llm",
+          "weight": 3,
+          "graderMarkdown": "PASS if the merge problem is illustrated with a concrete example with actual\nnumbers, such as: \"2 Doubles for 3 nights + 1 Double for 1 night → the PMS\ngets one block of 3 Doubles × 3 nights = 9 room-nights instead of 7\". Any\nnumbers are fine as long as the example shows the input and the wrong result.\n\nFAIL if the problem is only explained in the abstract (\"nights from the first\nline are used for all merged lines\") with no worked example.",
+          "config": {
+            "criteria": "PASS if the merge problem is illustrated with a concrete example with actual\nnumbers, such as: \"2 Doubles for 3 nights + 1 Double for 1 night → the PMS\ngets one block of 3 Doubles × 3 nights = 9 room-nights instead of 7\". Any\nnumbers are fine as long as the example shows the input and the wrong result.\n\nFAIL if the problem is only explained in the abstract (\"nights from the first\nline are used for all merged lines\") with no worked example.",
+            "focus": "last_message"
+          }
+        },
+        {
+          "name": "gate-no-writes",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": {
+              "source": "file",
+              "path": ".git/gh-calls.log"
+            },
+            "pattern": "^WRITE",
+            "flags": "m",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "no-diagram",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "```mermaid",
+            "flags": "",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "no-preamble",
+          "type": "regex",
+          "weight": 1,
+          "config": {
+            "target": "last_message",
+            "pattern": "^\\s*(sure|okay|ok,|great|here('s| is| are)|i('ve| have)? (reviewed|read|looked)|let me|i'll )",
+            "flags": "i",
+            "match": "not_contains"
+          }
+        },
+        {
+          "name": "plain-language",
+          "type": "llm",
+          "weight": 2,
+          "graderMarkdown": "Judge only how the findings are written, not whether they are right.\n\nPASS if every finding in the reply:\n- says what it means for the behaviour in everyday words first, with any\n  technical name (field, file, function) after it, in backticks;\n- uses short sentences;\n- explains or avoids jargon a newcomer would not know (e.g. nullable, DTO,\n  stub, snapshot, rollout).\n\nFAIL if any finding leads with code identifiers or file paths before saying\nwhat happens, or relies on unexplained jargon.",
+          "config": {
+            "criteria": "Judge only how the findings are written, not whether they are right.\n\nPASS if every finding in the reply:\n- says what it means for the behaviour in everyday words first, with any\n  technical name (field, file, function) after it, in backticks;\n- uses short sentences;\n- explains or avoids jargon a newcomer would not know (e.g. nullable, DTO,\n  stub, snapshot, rollout).\n\nFAIL if any finding leads with code identifiers or file paths before saying\nwhat happens, or relies on unexplained jargon.",
+            "focus": "last_message"
+          }
+        },
+        {
+          "name": "reader-understands",
+          "type": "llm",
+          "weight": 3,
+          "graderMarkdown": "You are a reader who has never seen this codebase and can only read the reply.\n\nWhat actually goes wrong in this PR: when a quote has several lines of the\nsame room type with different stay lengths, they are merged into one PMS block\nthat uses the nights of the first line for all rooms. The hotel system then\nreserves the wrong number of room-nights (too many or too few). The PR's only\ntest uses lines with the same nights, so it doesn't catch this.\n\nPASS if, from the reply alone, the reader would understand that rooms of the\nsame type booked for different numbers of nights get reserved for the wrong\nnumber of nights, without having to open the code.\n\nFAIL if this problem is missing, or is only described in code terms.",
+          "config": {
+            "criteria": "You are a reader who has never seen this codebase and can only read the reply.\n\nWhat actually goes wrong in this PR: when a quote has several lines of the\nsame room type with different stay lengths, they are merged into one PMS block\nthat uses the nights of the first line for all rooms. The hotel system then\nreserves the wrong number of room-nights (too many or too few). The PR's only\ntest uses lines with the same nights, so it doesn't catch this.\n\nPASS if, from the reply alone, the reader would understand that rooms of the\nsame type booked for different numbers of nights get reserved for the wrong\nnumber of nights, without having to open the code.\n\nFAIL if this problem is missing, or is only described in code terms.",
+            "focus": "last_message"
+          }
+        }
+      ],
+      "arms": {
+        "with": [
+          {
+            "score": 0.8181818181818182,
+            "passed": false,
+            "turns": 9,
+            "costUsd": 0.261583,
+            "judgeCostUsd": 0.028955999999999982,
+            "durationSeconds": 54,
+            "startedAt": "2026-11-01T15:29:44.217Z",
+            "error": null,
+            "tracePath": "/private/tmp/e-aDyAQN/out/trace.jsonl",
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "concrete-example",
+                "passed": true,
+                "weight": 3,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "I'd request changes on this one. The goal makes sense and the code is short, but the merge groups lines by room type alone, so it silently loses the length of stay whenever two lines of the same room type have different `nights`. The fix is small.\n\n**What I read:** the PR description, the diff, the PR branch checked out locally (`pr-102`), and the files that use `PmsBlock` (`src/pms/client.ts`, `src/quotes/quote.ts`, `src/quotes/routes.ts`). I also read CI (lint and unit-tests both pass) and the review comments, which are empty: no human or automated review yet. The PR isn't stacked on another one and no ticket is linked, so I checked it against the description.\n\n**What I looked at and found nothing in:** simplicity (the Map loop is fine), existing patterns, and comment quality. The new comment explains *why* blocks are merged (the per-block fee), which is the useful kind. This is a backend PR, so the frontend questions don't apply.\n\n## Findings\n\n**1. Lines with different stay lengths get merged, and the second line's nights are dropped.** This is a real bug.\n```text\nquote:   Double ×2 for 3 nights\n         Double ×1 for 7 nights\nPMS gets: Double ×3 for 3 nights   ← one room is short 4 nights → overbooking risk\nreverse the line order:\nPMS gets: Double ×3 for 7 nights   ← 2 rooms held 4 extra nights\n```\nThe merge key is just `roomType` (`src/pms/blocks.ts:16`, `:20`), and `nights` comes from whichever line arrives first (`:23`). Every line of a quote shares the same arrival date, so grouping by `roomType` + `nights` is enough: merge only when both match. You still save the fee in the common case, and blocks stay correct.\n→ **Recommend an inline comment on line 16. Must fix, about a one-line change.**\n\n**2. The test only covers the case that works.** The single test merges two lines with the same 3 nights, so it would pass with or without the bug above. It needs a case with two lines of the same room type but different nights, which should produce two blocks.\n\nI also couldn't confirm the new test actually ran. The repo has no `package.json` or test config on `main` or on the PR branch, yet `unit-tests` reports a pass. Please check that job's log to make sure `test/blocks.test.ts` was picked up, rather than counting the green check as coverage.\n→ **Recommend an inline comment on `test/blocks.test.ts`, line 3 (the `test(` line), asking for the different-nights case. The CI question is for you to check.**\n\n**3. Design question for you: does anything downstream assume one PMS block per quote line?** The block shape doesn't change, so no API contract breaks at deploy. What does change is the *number* of blocks per quote. If amendments, cancellations or reconciliation map PMS blocks back to quote lines one-to-one, they'll stop lining up for quotes confirmed after this deploys, and quotes confirmed before it will still have one block per line. Nothing in this repo calls `toPmsBlocks` or `reserveBlocks` (I searched `src`), so the consumer lives somewhere else and I can't see it.\n→ **Recommend asking the author in a plain PR comment, not an inline one.** You'd know better than I would who owns the PMS integration.\n\n## Proposed action\n**Request changes:** inline comments for 1 and 2, plus a plain PR comment for 3. All three are cheap, and finding 1 means reserving the wrong nights at the PMS in production.\n\nBoth inline line numbers come from the PR's version of each file: `src/pms/blocks.ts:16` is the `byType.get(line.roomType)` line, and `test/blocks.test.ts:3` is the `test(` line. Nothing has been posted yet. Tell me which to send, or what to change, and I'll post them."
+              },
+              {
+                "name": "gate-no-writes",
+                "passed": true,
+                "weight": 1,
+                "explanation": "pattern absent as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "no-diagram",
+                "passed": true,
+                "weight": 1,
+                "explanation": "pattern absent as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "no-preamble",
+                "passed": true,
+                "weight": 1,
+                "explanation": "pattern absent as expected",
+                "withOnly": false,
+                "scored": true
+              },
+              {
+                "name": "plain-language",
+                "passed": false,
+                "weight": 2,
+                "explanation": "judge votes: FAIL FAIL FAIL",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  false,
+                  false,
+                  false
+                ],
+                "evidence": "I'd request changes on this one. The goal makes sense and the code is short, but the merge groups lines by room type alone, so it silently loses the length of stay whenever two lines of the same room type have different `nights`. The fix is small.\n\n**What I read:** the PR description, the diff, the PR branch checked out locally (`pr-102`), and the files that use `PmsBlock` (`src/pms/client.ts`, `src/quotes/quote.ts`, `src/quotes/routes.ts`). I also read CI (lint and unit-tests both pass) and the review comments, which are empty: no human or automated review yet. The PR isn't stacked on another one and no ticket is linked, so I checked it against the description.\n\n**What I looked at and found nothing in:** simplicity (the Map loop is fine), existing patterns, and comment quality. The new comment explains *why* blocks are merged (the per-block fee), which is the useful kind. This is a backend PR, so the frontend questions don't apply.\n\n## Findings\n\n**1. Lines with different stay lengths get merged, and the second line's nights are dropped.** This is a real bug.\n```text\nquote:   Double ×2 for 3 nights\n         Double ×1 for 7 nights\nPMS gets: Double ×3 for 3 nights   ← one room is short 4 nights → overbooking risk\nreverse the line order:\nPMS gets: Double ×3 for 7 nights   ← 2 rooms held 4 extra nights\n```\nThe merge key is just `roomType` (`src/pms/blocks.ts:16`, `:20`), and `nights` comes from whichever line arrives first (`:23`). Every line of a quote shares the same arrival date, so grouping by `roomType` + `nights` is enough: merge only when both match. You still save the fee in the common case, and blocks stay correct.\n→ **Recommend an inline comment on line 16. Must fix, about a one-line change.**\n\n**2. The test only covers the case that works.** The single test merges two lines with the same 3 nights, so it would pass with or without the bug above. It needs a case with two lines of the same room type but different nights, which should produce two blocks.\n\nI also couldn't confirm the new test actually ran. The repo has no `package.json` or test config on `main` or on the PR branch, yet `unit-tests` reports a pass. Please check that job's log to make sure `test/blocks.test.ts` was picked up, rather than counting the green check as coverage.\n→ **Recommend an inline comment on `test/blocks.test.ts`, line 3 (the `test(` line), asking for the different-nights case. The CI question is for you to check.**\n\n**3. Design question for you: does anything downstream assume one PMS block per quote line?** The block shape doesn't change, so no API contract breaks at deploy. What does change is the *number* of blocks per quote. If amendments, cancellations or reconciliation map PMS blocks back to quote lines one-to-one, they'll stop lining up for quotes confirmed after this deploys, and quotes confirmed before it will still have one block per line. Nothing in this repo calls `toPmsBlocks` or `reserveBlocks` (I searched `src`), so the consumer lives somewhere else and I can't see it.\n→ **Recommend asking the author in a plain PR comment, not an inline one.** You'd know better than I would who owns the PMS integration.\n\n## Proposed action\n**Request changes:** inline comments for 1 and 2, plus a plain PR comment for 3. All three are cheap, and finding 1 means reserving the wrong nights at the PMS in production.\n\nBoth inline line numbers come from the PR's version of each file: `src/pms/blocks.ts:16` is the `byType.get(line.roomType)` line, and `test/blocks.test.ts:3` is the `test(` line. Nothing has been posted yet. Tell me which to send, or what to change, and I'll post them."
+              },
+              {
+                "name": "reader-understands",
+                "passed": true,
+                "weight": 3,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "I'd request changes on this one. The goal makes sense and the code is short, but the merge groups lines by room type alone, so it silently loses the length of stay whenever two lines of the same room type have different `nights`. The fix is small.\n\n**What I read:** the PR description, the diff, the PR branch checked out locally (`pr-102`), and the files that use `PmsBlock` (`src/pms/client.ts`, `src/quotes/quote.ts`, `src/quotes/routes.ts`). I also read CI (lint and unit-tests both pass) and the review comments, which are empty: no human or automated review yet. The PR isn't stacked on another one and no ticket is linked, so I checked it against the description.\n\n**What I looked at and found nothing in:** simplicity (the Map loop is fine), existing patterns, and comment quality. The new comment explains *why* blocks are merged (the per-block fee), which is the useful kind. This is a backend PR, so the frontend questions don't apply.\n\n## Findings\n\n**1. Lines with different stay lengths get merged, and the second line's nights are dropped.** This is a real bug.\n```text\nquote:   Double ×2 for 3 nights\n         Double ×1 for 7 nights\nPMS gets: Double ×3 for 3 nights   ← one room is short 4 nights → overbooking risk\nreverse the line order:\nPMS gets: Double ×3 for 7 nights   ← 2 rooms held 4 extra nights\n```\nThe merge key is just `roomType` (`src/pms/blocks.ts:16`, `:20`), and `nights` comes from whichever line arrives first (`:23`). Every line of a quote shares the same arrival date, so grouping by `roomType` + `nights` is enough: merge only when both match. You still save the fee in the common case, and blocks stay correct.\n→ **Recommend an inline comment on line 16. Must fix, about a one-line change.**\n\n**2. The test only covers the case that works.** The single test merges two lines with the same 3 nights, so it would pass with or without the bug above. It needs a case with two lines of the same room type but different nights, which should produce two blocks.\n\nI also couldn't confirm the new test actually ran. The repo has no `package.json` or test config on `main` or on the PR branch, yet `unit-tests` reports a pass. Please check that job's log to make sure `test/blocks.test.ts` was picked up, rather than counting the green check as coverage.\n→ **Recommend an inline comment on `test/blocks.test.ts`, line 3 (the `test(` line), asking for the different-nights case. The CI question is for you to check.**\n\n**3. Design question for you: does anything downstream assume one PMS block per quote line?** The block shape doesn't change, so no API contract breaks at deploy. What does change is the *number* of blocks per quote. If amendments, cancellations or reconciliation map PMS blocks back to quote lines one-to-one, they'll stop lining up for quotes confirmed after this deploys, and quotes confirmed before it will still have one block per line. Nothing in this repo calls `toPmsBlocks` or `reserveBlocks` (I searched `src`), so the consumer lives somewhere else and I can't see it.\n→ **Recommend asking the author in a plain PR comment, not an inline one.** You'd know better than I would who owns the PMS integration.\n\n## Proposed action\n**Request changes:** inline comments for 1 and 2, plus a plain PR comment for 3. All three are cheap, and finding 1 means reserving the wrong nights at the PMS in production.\n\nBoth inline line numbers come from the PR's version of each file: `src/pms/blocks.ts:16` is the `byType.get(line.roomType)` line, and `test/blocks.test.ts:3` is the `test(` line. Nothing has been posted yet. Tell me which to send, or what to change, and I'll post them."
+              }
+            ]
+          }
+        ]
+      },
+      "aggregates": {
+        "score": 0.8181818181818182,
+        "passRate": 0
+      }
+    }
+  ],
+  "aggregates": {
+    "casesTotal": 5,
+    "casesPassed": 0,
+    "overallScore": 0.6552564102564102,
+    "overallPassRate": 0
+  }
+}
