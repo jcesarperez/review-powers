@@ -41,21 +41,44 @@ you find those.
 ## Explain it to someone who doesn't know the code
 
 The user often hasn't read this code, so `file:line` citations alone don't
-land. **Lead each finding with one concrete case** — the input and what goes
-wrong, or the code's shape before and after — then the citations as evidence.
-A few lines:
+land. Skip preambles and keep prose brief and plain: what goes wrong and why,
+in everyday words. Names in backticks point at the code; they don't explain
+it. A term they would have to look up gets a few words or stays out.
 
-```text
-Ana adds 10 rooms; the inclusions read gets a 403.
-  today:  502 → "something went wrong", no sign-in prompt
-  fixed:  401 → sign-in prompt, same as when pricing gets a 403
-```
+**Lead each finding with one concrete case**, then the citations as evidence.
+An abstract point needs numbers: "3 shirts in M + 1 in L, merged by product →
+the warehouse ships 4 in M". A finding that is already one input and one wrong
+result is its own case, and a sentence is enough.
 
-Skip it when the finding is already concrete.
+Add a view only where prose would leave the reader rebuilding a shape or a
+flow. Pick the smallest one that makes the point, next to the sentence it
+supports:
+
+- What changes in something that already exists, a shape (route, fields with
+  type and nullability, table columns) or the fix you propose, as a `diff`,
+  never raw JSON:
+
+  ```diff
+   GET /api/v1/orders/{orderId}
+     response Order
+       id: uuid
+  +    shipments: Shipment[]  (required)
+  -    legacyTotal: decimal?
+  ```
+
+- Changed control flow as a call tree or pseudocode in `text`, the new step
+  marked.
+- An interaction across services as a `mermaid` sequenceDiagram, when prose
+  would need more than two sentences.
+- Which files changed as a shallow file tree, only when that matters.
+
+Usually one kind of view, sometimes two. Use your judgement and don't
+overwhelm the user.
 
 ## The gate
 
-Present the verdicts in the conversation and **stop**. Nothing is edited,
+Open with your overall verdict: which findings hold and which one matters
+most. Present the verdicts in the conversation and **stop**. Nothing is edited,
 committed, pushed, or replied to before the user answers.
 
 Give them the argument, not just the conclusion: the citation, the strongest

@@ -48,7 +48,7 @@ API shapes.
 |---|---|---|
 | `review-pr/explain-contract-change` | 101: endpoint shape changes; invoicing, outside the diff, breaks | Shape shown as a well-formed `diff`, not JSON |
 | `review-pr/explain-with-example` | 102: merging PMS blocks loses stay lengths | Abstract bug explained with a worked example |
-| `review-pr/explain-concrete-finding` | 103: unknown discount code → 500 | Concrete finding gets no block |
+| `review-pr/explain-concrete-finding` | 103: unknown discount code → 500 | Concrete finding: plain sentence, fix as a small `diff`, no other block |
 
 | `review-pr-feedback/verdict-per-comment` | 201: cancel quotes; four inline comments | One right comment, one wrong (reviewer misreads the SQL), one right but out of scope, one trivial but cheap → do it |
 | `review-pr-feedback/all-feeds` | 202: quotes expire after 14 days; comments inline, in the conversation and in a bot review body | Every comment gets a verdict, and the reply says which feeds it read |

@@ -13,6 +13,7 @@ Skills that turn AI code reviews into decision reports: the user reviews the rev
 - **Judgement over rules:** a skill is prose that shapes judgement. Prefer a principle with its reason to a new rule.
 - **Evidence:** change a skill in response to an observed failure, and prove the change with an eval.
 - **Repeated corrections:** when the user corrects the same behaviour twice, it becomes an eval case.
+- **Shared section:** "Explain it to someone who doesn't know the code" is the same in both skills (each folder installs on its own); edit both.
 
 ## Layout
 
