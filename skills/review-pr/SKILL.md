@@ -29,10 +29,16 @@ scratch directory, so the user's checkout stays as it is; `--cleanup` removes
 it once you have read what you need.
 
 Account for the feeds, not just the findings. The description (which states
-intent, and makes claims worth checking rather than trusting), CI, existing
-review comments, and whether this PR is stacked on another are each either
-read or unread — and an unread feed and a clean one look identical in a
-report. Only one of them is honest.
+intent, and makes claims worth checking rather than trusting), the ticket
+chain, CI, existing review comments, and whether this PR is stacked on another
+are each either read or unread — and an unread feed and a clean one look
+identical in a report. Only one of them is honest.
+
+The ticket chain is the PR's ticket and its parent, each with its comments,
+plus any sibling the ticket itself references. The PR's ticket is often a
+subtask, and the decisions that bind it can live above it: a PR can satisfy its
+subtask and still break its story. Read them through whatever issue-tracker
+tool the environment provides.
 
 Someone — or something — has often reviewed this before you, whether an
 automated reviewer or a colleague. Don't restate what they already raised,

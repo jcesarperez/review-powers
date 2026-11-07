@@ -1,0 +1,28 @@
+{
+  "number": 105,
+  "title": "HOT-532 Add breakfast to quotes",
+  "body": "Adds breakfast to quotes.\n\n- New optional `breakfast` flag on each room line, so an organiser can add breakfast for some rooms and not others.\n- Breakfast is €18 per room per night and is included in the quote total.\n- `GET /api/v1/quotes/{id}` returns the flag inside `rooms`, so the client can show it.\n\nOld quotes have no flag and keep their price. Unit tests cover the total with and without breakfast.\n\nTicket: https://tracker.acme.test/browse/HOT-532",
+  "state": "OPEN",
+  "author": {
+    "login": "liam-dev"
+  },
+  "baseRefName": "main",
+  "headRefName": "feat/hot-532-breakfast",
+  "url": "https://github.com/acme/hotel-api/pull/105",
+  "isDraft": false,
+  "reviewDecision": "REVIEW_REQUIRED",
+  "reviews": [],
+  "comments": [],
+  "statusCheckRollup": [
+    {
+      "name": "lint",
+      "status": "COMPLETED",
+      "conclusion": "SUCCESS"
+    },
+    {
+      "name": "unit-tests",
+      "status": "COMPLETED",
+      "conclusion": "SUCCESS"
+    }
+  ]
+}

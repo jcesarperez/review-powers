@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+# Fake issue-tracker CLI for evals. Serves tickets from fixture files and logs
+# every call, like the fake `gh`. Read-only: anything else is UNSUPPORTED.
+#
+# $GH_FIXTURE_DIR/tickets/<KEY>.json, one per ticket:
+#   key, type, status, summary, description, parent (key or null), assignee,
+#   comments: [{author, created, body}]
+# Calls are logged to <repo>/.git/tracker-calls.log (graders read it).
+
+set -u
+DATA="${GH_FIXTURE_DIR:?GH_FIXTURE_DIR not set}"
+TICKETS="$DATA/tickets"
+LOG="$(cat "$DATA/repo")/.git/tracker-calls.log"
+ARGS="$*"
+log() { printf '%s\t%s\n' "$1" "tracker $ARGS" >> "$LOG"; }
+
+usage() {
+  cat <<'EOF'
+tracker - read issues from the team's issue tracker
+
+Usage:
+  tracker view <KEY> [--fields <list>] [--json]   show an issue
+  tracker comments <KEY> [--json]                 list the comments on an issue
+  tracker --help                                  show this help
+
+Flags:
+  --fields <list>   comma-separated fields to show with `view`
+                    (default: key,type,summary,status,assignee,description;
+                    also available: parent)
+  --json            print the issue (all fields) or its comments as JSON
+
+Examples:
+  tracker view HOT-101
+  tracker comments HOT-101
+EOF
+}
+
+CMD="" KEY="" AS_JSON="" FIELDS="key,type,summary,status,assignee,description"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -h|--help|help) log READ; usage; exit 0 ;;
+    --json) AS_JSON=1 ;;
+    --fields) FIELDS="${2:-}"; shift ;;
+    --fields=*) FIELDS="${1#--fields=}" ;;
+    -*) log UNSUPPORTED; echo "tracker: unknown flag $1 (see tracker --help)" >&2; exit 2 ;;
+    *) if [ -z "$CMD" ]; then CMD="$1"; elif [ -z "$KEY" ]; then KEY="$1"; fi ;;
+  esac
+  shift
+done
+
+[ -n "$CMD" ] || { log READ; usage; exit 0; }
+
+case "$CMD" in
+  view|comments) ;;
+  *) log UNSUPPORTED; echo "tracker: unknown command '$CMD' (see tracker --help)" >&2; exit 2 ;;
+esac
+[ -n "$KEY" ] || { log UNSUPPORTED; echo "tracker: $CMD needs an issue key" >&2; exit 2; }
+KEY="$(echo "$KEY" | tr a-z A-Z)"
+FILE="$TICKETS/$KEY.json"
+if [ ! -f "$FILE" ]; then
+  log READ; echo "tracker: issue $KEY not found" >&2; exit 1
+fi
+log READ
+
+comments_text='(.comments // []) | if length == 0 then "No comments." else map("--- \(.author), \(.created)\n\(.body)") | join("\n\n") end'
+
+case "$CMD" in
+  view)
+    # Like common tracker CLIs: `view` shows a default set of fields and no
+    # comments; `--fields` or `--json` show more, `comments` lists the comments.
+    if [ -n "$AS_JSON" ]; then jq 'del(.comments)' "$FILE"
+    else
+      jq -r --arg f "$FIELDS" '. as $t | $f | split(",") | map(gsub("^ +| +$"; "")) | map(select(. != "comments"))
+        | map(. as $k | ($t[$k] // "-") as $v | if $k == "description" then "Description:\n\($v)" else "\($k | (.[0:1] | ascii_upcase) + .[1:]): \($v)" end)
+        | join("\n")' "$FILE"
+    fi ;;
+  comments)
+    if [ -n "$AS_JSON" ]; then jq '.comments // []' "$FILE"; else jq -r "$comments_text" "$FILE"; fi ;;
+esac

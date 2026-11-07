@@ -1,0 +1,26 @@
+{
+  "key": "HOT-530",
+  "type": "Story",
+  "status": "In Progress",
+  "summary": "Meal plans on group quotes",
+  "parent": null,
+  "assignee": "maria-pm",
+  "description": "Group organisers keep asking for meals in the quote instead of sorting them out with the hotel afterwards. We start with breakfast; half board follows next quarter (HOT-531).\n\nSubtasks:\n- HOT-532 Breakfast on quotes\n- HOT-531 Half board on quotes",
+  "comments": [
+    {
+      "author": "liam-dev",
+      "created": "2026-10-27",
+      "body": "Question on HOT-532: it says a breakfast flag per room line. Is that what we want, or should breakfast be chosen once for the whole quote?"
+    },
+    {
+      "author": "maria-pm",
+      "created": "2026-10-29",
+      "body": "Decision from the call with revenue and the PMS team: the meal plan is one choice for the whole quote, never per room line. Hotels won't serve breakfast to half a group, and the PMS takes the meal plan once per booking, not per room. Model it as a single field on the quote, `mealPlan: \"none\" | \"breakfast\" | \"half-board\"`, so half board is a new value next quarter and not a new field. All subtasks of this story follow this; I'll update HOT-532."
+    },
+    {
+      "author": "liam-dev",
+      "created": "2026-10-29",
+      "body": "Got it, thanks."
+    }
+  ]
+}

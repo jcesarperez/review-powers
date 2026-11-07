@@ -1,0 +1,21 @@
+{
+  "key": "HOT-532",
+  "type": "Sub-task",
+  "status": "In Review",
+  "summary": "Breakfast on quotes",
+  "parent": "HOT-530",
+  "assignee": "liam-dev",
+  "description": "As a group organiser I want to add breakfast to my quote, so the price I see already includes it.\n\nAcceptance criteria:\n- Each room line on a quote has an optional `breakfast` flag; lines without it keep today's price.\n- Breakfast costs €18 per room per night.\n- The quote total includes breakfast for the lines that have it.\n- GET /api/v1/quotes/{id} returns the flag with each room line.",
+  "comments": [
+    {
+      "author": "maria-pm",
+      "created": "2026-10-28",
+      "body": "Price confirmed with revenue: €18 per room per night, same in every hotel for now."
+    },
+    {
+      "author": "liam-dev",
+      "created": "2026-11-04",
+      "body": "PR is up: https://github.com/acme/hotel-api/pull/105"
+    }
+  ]
+}

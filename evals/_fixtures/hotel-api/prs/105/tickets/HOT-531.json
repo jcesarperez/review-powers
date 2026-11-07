@@ -1,0 +1,10 @@
+{
+  "key": "HOT-531",
+  "type": "Sub-task",
+  "status": "To Do",
+  "summary": "Half board on quotes",
+  "parent": "HOT-530",
+  "assignee": null,
+  "description": "Half board (breakfast and dinner) as a meal plan on quotes. Price to be confirmed with revenue.",
+  "comments": []
+}

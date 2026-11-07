@@ -8,6 +8,8 @@
 #   $HOME/origin/            bare clone acting as the GitHub remote
 #   $HOME/.gh-fixture/       data the fake gh serves, outside the agent's repo
 #   $HOME/.bin/gh            the fake gh, put first on PATH by the shell profiles
+#   $HOME/.bin/tracker       the fake issue tracker, serving prs/<n>/tickets/*.json
+#   ./.git/tracker-calls.log every tracker call (graders read it)
 
 set -euo pipefail
 N="$1"
@@ -63,6 +65,13 @@ printf '%s' "$REPO" > "$DATA/repo"
 : > "$REPO/.git/gh-calls.log"
 cp "$HERE/bin/gh" "$HOME/.bin/gh"
 chmod +x "$HOME/.bin/gh"
+# The issue tracker the repo's README points to. Every PR gets it; one without
+# tickets answers "not found", like a real tracker for a key nobody filed.
+mkdir -p "$DATA/tickets"
+[ -d "$PR_DIR/tickets" ] && cp "$PR_DIR"/tickets/*.json "$DATA/tickets/"
+: > "$REPO/.git/tracker-calls.log"
+cp "$HERE/bin/tracker" "$HOME/.bin/tracker"
+chmod +x "$HOME/.bin/tracker"
 
 # The agent's shell loads these, so this is how the fake gh reaches its PATH.
 # On macOS /usr/bin/git is an xcrun shim that fails inside the sandbox, so a

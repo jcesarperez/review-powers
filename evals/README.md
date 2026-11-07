@@ -24,8 +24,9 @@ claude plugin eval . --scaffold --allow-tools Bash Edit Write --judge-model sonn
 `_fixtures/setup-pr.sh <n>` is called from each case's `scaffold.sh`. It builds
 a small TypeScript hotel API in the workspace (`_fixtures/hotel-api/base/`),
 with PR `<n>` (`_fixtures/hotel-api/prs/<n>/`) on a local origin, then puts a
-fake `gh` (`_fixtures/bin/gh`) first on the agent's PATH through the shell
-profiles of the run's temporary home.
+fake `gh` (`_fixtures/bin/gh`) and a fake issue tracker (`_fixtures/bin/tracker`)
+first on the agent's PATH through the shell profiles of the run's temporary
+home.
 
 `setup-pr.sh <n> author` is for `review-pr-feedback`, where the user wrote the
 PR: the workspace is on the PR branch, tracking origin, and `gh` is logged in
@@ -61,10 +62,20 @@ folders. Check it with
 scaffolded repo) makes the detached worktree under `$REVIEW_POWERS_SCRATCH`;
 `... 104 --cleanup` removes it.
 
+The fake `tracker` stands in for whatever issue-tracker tool a user has. The
+skill names no tracker; the agent learns of it as it would in a real repo,
+from the fixture repo's `README.md` ("read tickets with the `tracker` CLI")
+and `tracker --help`. It serves `prs/<n>/tickets/<KEY>.json` (`key`, `type`,
+`status`, `summary`, `description`, `parent`, `assignee`, `comments`) through
+`tracker view <KEY> [--fields <list>] [--json]` and `tracker comments <KEY>
+[--json]`, and logs every call to `.git/tracker-calls.log`. Like common
+tracker CLIs, `view` shows no comments and leaves `parent` out of its default
+fields. A PR without tickets answers "not found".
+
 To add a PR: create `prs/<n>/pr.json` (the `gh pr view --json` shape) and
 `prs/<n>/files/` (files that differ from `base/`). Optional
 `review_comments.json`, `issue_comments.json` and `reviews.json` use the REST
-API shapes.
+API shapes; optional `tickets/` holds the tickets the PR's chain reaches.
 
 ## Cases
 
@@ -73,6 +84,7 @@ API shapes.
 | `review-pr/explain-contract-change` | 101: endpoint shape changes; invoicing, outside the diff, breaks | Shape shown as a well-formed `diff`, not JSON |
 | `review-pr/explain-with-example` | 102: merging PMS blocks loses stay lengths | Abstract bug explained with a worked example |
 | `review-pr/explain-concrete-finding` | 103: unknown discount code → 500 | Concrete finding: plain sentence, fix as a small `diff`, no other block |
+| `review-pr/ticket-chain` | 105: breakfast per room line; the subtask is satisfied, its parent story decided one meal plan per quote (in a comment) | The finding cites the parent's decision, the parent's comments were read, and the coverage line says the ticket chain was read |
 
 | `review-pr-feedback/verdict-per-comment` | 201: cancel quotes; four inline comments | One right comment, one wrong (reviewer misreads the SQL), one right but out of scope, one trivial but cheap → do it |
 | `review-pr-feedback/all-feeds` | 202: quotes expire after 14 days; comments inline, in the conversation and in a bot review body | Every comment gets a verdict, and the reply says which feeds it read |
