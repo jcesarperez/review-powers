@@ -13,7 +13,8 @@ Skills that turn AI code reviews into decision reports: the user reviews the rev
 - **Judgement over rules:** a skill is prose that shapes judgement. Prefer a principle with its reason to a new rule.
 - **Evidence:** change a skill in response to an observed failure, and prove the change with an eval.
 - **Repeated corrections:** when the user corrects the same behaviour twice, it becomes an eval case.
-- **Shared section:** "Explain it to someone who doesn't know the code" is the same in both skills (each folder installs on its own); edit both.
+- **Shared parts:** each folder installs on its own, so two things are identical in both skills; edit both. "Explain it to someone who doesn't know the code" in `SKILL.md`, and `scripts/lib/feeds.sh`, the feed-fetching code that `fetch-pr.sh` and `feeds.sh` source. Check the script with `cmp skills/review-pr/scripts/lib/feeds.sh skills/review-pr-feedback/scripts/lib/feeds.sh`.
+- **Scripts:** mechanics (fetching, filtering, replying) live in `skills/<name>/scripts/`; `SKILL.md` says when to run them and keeps the judgement. Bash 3.2, `gh` and `jq` only.
 
 ## Workflow
 
@@ -23,6 +24,7 @@ Skills that turn AI code reviews into decision reports: the user reviews the rev
 
 ```text
 skills/<name>/SKILL.md      the skills
+skills/<name>/scripts/      what the skills run: fetch-pr.sh; feeds.sh, reply.sh; lib/feeds.sh in both
 .claude-plugin/             plugin + marketplace manifests (version lives in plugin.json)
 evals/<skill>/<case>/       eval cases: prompt.md, case.yaml, graders/, scaffold.sh
 evals/_fixtures/            fake hotel-api repo, its PRs, and a fake `gh`

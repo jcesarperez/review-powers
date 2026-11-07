@@ -2,18 +2,24 @@
 name: review-pr
 disable-model-invocation: true
 description: "Review a PR: bugs, deploy risk, important decisions, architecture consistency, tests, simplicity, comment abuse."
+allowed-tools: Bash(${CLAUDE_SKILL_DIR}/scripts/* *)
 ---
 
 # Review PR
 
-If no PR was given, ask which one — don't guess from the current branch.
+If no PR was given, ask which one — don't guess from the current branch. Then
+run `${CLAUDE_SKILL_DIR}/scripts/fetch-pr.sh <PR>` first: it saves the
+description, CI, every comment feed and the diff to a scratch directory and
+prints only counts and paths. Read the files you need. Generated files are left
+out of `diff.patch` and listed in `omitted.txt`; open one when it carries a
+contract.
 
 We ship to a high-availability product. The cost of a bad merge is not a
 revert, it's a revert under load. Read for that.
 
 ## Know what you actually read
 
-`gh pr diff` shows what changed, not what depends on it. A signature that
+The diff shows what changed, not what depends on it. A signature that
 reads correct in the diff has call sites the diff never mentions, and a
 migration reads fine right up until you look at what queries the column.
 So read past the boundary whenever the change touches something other code

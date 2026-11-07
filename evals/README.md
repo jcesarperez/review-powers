@@ -32,10 +32,30 @@ PR: the workspace is on the PR branch, tracking origin, and `gh` is logged in
 as the PR's author.
 
 The fake `gh` serves the PR from `prs/<n>/*.json` and logs every call to
-`.git/gh-calls.log`. Reads are answered. Writes (comments, reviews, edits) are
-logged as `WRITE` and faked, so the `gate-no-writes` grader can check that
-nothing was posted before the user decided. The comment files feed the REST
-endpoints, `gh pr view --json comments,reviews` and GraphQL alike.
+`.git/gh-calls.log`. Reads are answered. Writes (comments, replies, reviews,
+edits, `resolveReviewThread`) are logged as `WRITE` and faked, so the
+`gate-no-writes` grader can check that nothing was posted before the user
+decided. The comment files feed the REST endpoints, `gh pr view --json
+comments,reviews` and GraphQL alike.
+
+It answers every call the skills' scripts make: `pr view --json`, `pr diff`,
+`pr checks --json`, `repo view` (default branch), the three comment feeds
+(paginated or not), the GraphQL `reviewThreads` query, the replies, issue
+comment and `PATCH` pull endpoints, and the PR head's `.gitattributes`
+(`contents/.gitattributes`, from the PR's own `files/.gitattributes`). A
+resolved thread is remembered in `$GH_FIXTURE_DIR/resolved.txt`, so a later
+`reviewThreads` query shows it resolved. `setup-pr.sh` adds `headRefOid` and the
+size fields to the served `pr.json`. Anything else is logged `UNSUPPORTED`.
+
+PR 104 is not used by a case: a stacked draft with a ticket key, a lockfile, an
+OpenAPI spec, a generated client and a `linguist-generated` SDK, for trying
+`fetch-pr.sh` by hand. Scaffold it in a temp dir with
+`HOME=$tmp/home evals/_fixtures/setup-pr.sh 104` run from an empty directory,
+then put `$HOME/.bin` first on `PATH` and set `GH_FIXTURE_DIR=$HOME/.gh-fixture`.
+
+The skills' scripts share `scripts/lib/feeds.sh`, identical in both skill
+folders. Check it with
+`cmp skills/review-pr/scripts/lib/feeds.sh skills/review-pr-feedback/scripts/lib/feeds.sh`.
 
 To add a PR: create `prs/<n>/pr.json` (the `gh pr view --json` shape) and
 `prs/<n>/files/` (files that differ from `base/`). Optional

@@ -1,0 +1,28 @@
+{
+  "number": 104,
+  "title": "HOT-482 Regenerate the discounts client",
+  "body": "<!-- template: describe the change -->\nStacked on #103. Regenerates the discounts client from the new spec and reads codes through it. Payloads stay UTF-8.\n\nTicket: HOT-482",
+  "state": "OPEN",
+  "author": {
+    "login": "sofia-dev"
+  },
+  "baseRefName": "feat/discount-codes-table",
+  "headRefName": "feat/hot-482-discounts-client",
+  "url": "https://github.com/acme/hotel-api/pull/104",
+  "isDraft": true,
+  "reviewDecision": "REVIEW_REQUIRED",
+  "reviews": [],
+  "comments": [],
+  "statusCheckRollup": [
+    {
+      "name": "lint",
+      "status": "COMPLETED",
+      "conclusion": "FAILURE"
+    },
+    {
+      "name": "unit-tests",
+      "status": "COMPLETED",
+      "conclusion": "SUCCESS"
+    }
+  ]
+}

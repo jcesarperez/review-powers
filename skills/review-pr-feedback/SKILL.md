@@ -2,6 +2,7 @@
 name: review-pr-feedback
 disable-model-invocation: true
 description: "Work a PR's review feedback end to end, from verdicts to replies."
+allowed-tools: Bash(${CLAUDE_SKILL_DIR}/scripts/* *)
 ---
 
 # Review PR feedback
@@ -10,6 +11,10 @@ Review feedback is **not a to-do list**. This skill sorts it against the real
 code, hands the user a verdict they can argue with, and only then acts.
 
 ## Know what you actually read
+
+Start with `${CLAUDE_SKILL_DIR}/scripts/feeds.sh <PR>`: it saves every feed with
+its thread state to a scratch directory, says whether your tree is the PR's head
+commit, and prints a count per feed, zero included. Read the files you need.
 
 Feedback hides on more feeds than the one you opened, so account for the feeds,
 not just the findings — an unread feed and an empty one look identical in a
@@ -112,7 +117,9 @@ asserts.
 
 An unanswered finding reads as ignored. Concise, kind, non-pedantic: what you
 did and why, pointing at the commit — or, for a rejection, what the code actually
-does.
+does. `${CLAUDE_SKILL_DIR}/scripts/reply.sh` posts replies, resolves threads and
+updates the description (no arguments prints its usage); it comes after the gate,
+never before.
 
 **State every deviation plainly**, to the reviewer and to the user: where you
 did something other than what was asked, say so, say why, and invite the

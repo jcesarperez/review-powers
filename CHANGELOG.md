@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Added
+
+- `review-pr` runs `fetch-pr.sh` first: one call saves the description, CI per check, every comment feed (inline, conversation, review bodies), whether the PR is stacked, ticket keys, and the diff without generated files (lockfiles, generated clients, OpenAPI specs, anything marked `linguist-generated`). It prints counts and paths; the left-out files are listed with their size and kept in a separate patch.
+- `review-pr-feedback` runs `feeds.sh` first: every feed with thread state (resolved, outdated, replies, bot or human), bot markup stripped, a count per feed including zero, and a check that your checkout is the PR's head commit.
+- `review-pr-feedback` posts through `reply.sh`: inline replies, conversation comments, resolving threads and updating the PR description.
+
 ### Changed
 
 - `review-pr` and `review-pr-feedback` explain what goes wrong and why in plain words, with code names as pointers rather than the explanation, and a worked example with numbers when the point is abstract.

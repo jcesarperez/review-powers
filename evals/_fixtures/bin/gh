@@ -13,6 +13,8 @@
 #   issue_comments.json     optional, PR conversation comments (REST shape)
 #   reviews.json            optional, review bodies (REST shape)
 #   viewer                  optional, the logged-in login (default: reviewer)
+#   gitattributes           optional, the PR head's root .gitattributes
+#   resolved.txt            written by the fake: thread ids resolved so far
 #
 # The three optional comment files also feed `gh pr view --json comments,reviews`
 # and GraphQL reviewThreads/comments/reviews, so every way of reading them agrees.
@@ -45,6 +47,7 @@ while [ $# -gt 0 ]; do
     --name-only) NAME_ONLY=1; shift ;;
     --paginate|--slurp|--color=*|--patch) shift ;;
     -R|--repo) shift 2 ;;
+    -H|--header) shift 2 ;;
     *) POS+=("$1"); shift ;;
   esac
 done
@@ -61,12 +64,13 @@ pr_json() {
 # One GraphQL answer that covers the usual PR-feedback queries; --jq picks from it.
 graphql() {
   jq -n --arg v "$VIEWER" --argjson n "$NUMBER" --argjson rc "$(or_empty review_comments.json)" \
-     --argjson ic "$(or_empty issue_comments.json)" --argjson rv "$(or_empty reviews.json)" '
+     --argjson ic "$(or_empty issue_comments.json)" --argjson rv "$(or_empty reviews.json)" \
+     --argjson resolved "$(if [ -f "$RESOLVED" ]; then jq -R -s 'split("\n") | map(select(length > 0))' "$RESOLVED"; else echo '[]'; fi)" '
     def page(xs): {totalCount: (xs|length), pageInfo: {hasNextPage: false, endCursor: null}, nodes: xs};
     def who: {login: .user.login, __typename: (if .user.type == "Bot" then "Bot" else "User" end)};
     {data: {viewer: {login: $v}, repository: {pullRequest: {number: $n,
       reviewThreads: page([$rc[] | select(.in_reply_to_id == null) | . as $root | {
-        id: ("PRRT_" + (.id|tostring)), isResolved: false, isOutdated: false, path, line,
+        id: ("PRRT_" + (.id|tostring)), isResolved: (("PRRT_" + (.id|tostring)) as $tid | any($resolved[]; . == $tid)), isOutdated: false, path, line,
         comments: page([$rc[] | select(.id == $root.id or .in_reply_to_id == $root.id) | {
           id: ("PRRC_" + (.id|tostring)), databaseId: .id, body, path, line, author: who,
           createdAt: .created_at, url: .html_url}])}]),
@@ -74,7 +78,8 @@ graphql() {
       reviews: page([$rv[] | {id: ("PRR_" + (.id|tostring)), databaseId: .id, body, state, author: who, submittedAt: .submitted_at, url: .html_url}])
     }}}}'
 }
-write() { log WRITE; echo '{"id": 1, "html_url": "https://github.com/acme/hotel-api/pull/'"$NUMBER"'#fake"}'; exit 0; }
+write() { log WRITE; echo '{"id": 1, "html_url": "https://github.com/acme/hotel-api/pull/'"$NUMBER"'#fake"}' | out; exit 0; }
+RESOLVED="$DATA/resolved.txt"
 
 cmd="${POS[0]:-}"; sub="${POS[1]:-}"
 
@@ -109,13 +114,24 @@ case "$cmd $sub" in
       case "$sub" in graphql) ;; *) write ;; esac
     fi
     if [ "$sub" = graphql ]; then
-      case "$ARGS" in *mutation*) write ;; esac
+      case "$ARGS" in
+        *resolveReviewThread*)
+          # Remember the resolved thread, so a later reviewThreads query shows it.
+          id="$(printf '%s\n' "$ARGS" | sed -n 's/.*[ =]\(PRRT_[A-Za-z0-9_]*\).*/\1/p' | head -n 1)"
+          [ -z "$id" ] || echo "$id" >> "$RESOLVED"
+          log WRITE
+          jq -n --arg id "$id" '{data: {resolveReviewThread: {thread: {id: $id, isResolved: true}}}}' | out; exit 0 ;;
+        *mutation*) write ;;
+      esac
       log READ; graphql | out; exit 0
     fi
     log READ
     path="${sub#/}"; path="${path%%\?*}"
     case "$path" in
       user) jq -n --arg v "$VIEWER" '{login: $v, type: "User"}' | out ;;
+      repos/*/contents/.gitattributes)
+        if [ -f "$DATA/gitattributes" ]; then cat "$DATA/gitattributes"
+        else echo "gh: Not Found (HTTP 404)" >&2; exit 1; fi ;;
       repos/*/pulls/*/comments) or_empty review_comments.json | out ;;
       repos/*/pulls/*/reviews) or_empty reviews.json | out ;;
       repos/*/issues/*/comments) or_empty issue_comments.json | out ;;

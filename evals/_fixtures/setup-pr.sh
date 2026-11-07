@@ -53,6 +53,12 @@ cp "$PR_DIR"/*.json "$DATA/"
 # Precomputed so the fake gh doesn't need git inside the sandbox.
 git diff "main...origin/$HEAD_BRANCH" > "$DATA/diff.patch"
 git diff --name-status "main...origin/$HEAD_BRANCH" > "$DATA/name-status.txt"
+# What `gh pr view --json` adds on a real PR: head commit and size.
+git diff --numstat "main...origin/$HEAD_BRANCH" | awk '{a += $1; d += $2; n++} END {printf "{\"additions\": %d, \"deletions\": %d, \"changedFiles\": %d}", a, d, n}' > "$DATA/size.json"
+jq --arg sha "$(git rev-parse "origin/$HEAD_BRANCH")" --slurpfile size "$DATA/size.json" \
+  '. + {headRefOid: $sha} + $size[0]' "$PR_DIR/pr.json" > "$DATA/pr.json"
+# Served as the PR head's root .gitattributes, when the PR has one.
+[ -f "$PR_DIR/files/.gitattributes" ] && cp "$PR_DIR/files/.gitattributes" "$DATA/gitattributes"
 printf '%s' "$REPO" > "$DATA/repo"
 : > "$REPO/.git/gh-calls.log"
 cp "$HERE/bin/gh" "$HOME/.bin/gh"
