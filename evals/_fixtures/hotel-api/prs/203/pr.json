@@ -1,0 +1,28 @@
+{
+  "number": 203,
+  "title": "HOT-310 Group discount for 10+ rooms",
+  "body": "Quotes for 10 or more rooms get 5% off. The group discount does not stack with a discount code: a quote with a code gets the code's discount instead.\n\nTicket: HOT-310",
+  "state": "OPEN",
+  "author": {
+    "login": "ana-dev"
+  },
+  "baseRefName": "main",
+  "headRefName": "feat/hot-310-group-discount",
+  "url": "https://github.com/acme/hotel-api/pull/203",
+  "isDraft": false,
+  "reviewDecision": "CHANGES_REQUESTED",
+  "reviews": [],
+  "comments": [],
+  "statusCheckRollup": [
+    {
+      "name": "lint",
+      "status": "COMPLETED",
+      "conclusion": "SUCCESS"
+    },
+    {
+      "name": "unit-tests",
+      "status": "COMPLETED",
+      "conclusion": "SUCCESS"
+    }
+  ]
+}

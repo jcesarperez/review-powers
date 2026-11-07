@@ -4,7 +4,8 @@
 # Usage: setup-pr.sh <pr-number> [reviewer|author]
 #   reviewer (default)       ./ is a git repo on main = base/; the PR branch (base/ + prs/<n>/files/) is on origin only
 #   author                   ./ is on the PR branch, tracking origin; gh is logged in as the PR's author
-#   ./.git/gh-calls.log      every gh call, READ or WRITE (graders read it)
+#   ./.git/gh-calls.log      every gh call, READ or WRITE, and a POSTED line per write (graders read it)
+#   prs/<n>/main/            optional files on main the PR doesn't touch; NO_MAIN_FILES=1 skips them
 #   $HOME/origin/            bare clone acting as the GitHub remote
 #   $HOME/.gh-fixture/       data the fake gh serves, outside the agent's repo
 #   $HOME/.bin/gh            the fake gh, put first on PATH by the shell profiles
@@ -21,6 +22,14 @@ DATA="$HOME/.gh-fixture"
 mkdir -p "$DATA" "$HOME/.bin"
 
 cp -R "$HERE/hotel-api/base/." "$REPO/"
+# Files on main that the PR doesn't touch, such as a contributing guide.
+# NO_MAIN_FILES=1 leaves them out, for a variant of the same PR without them.
+if [ -d "$PR_DIR/main" ] && [ "${NO_MAIN_FILES:-}" != 1 ]; then
+  cp -R "$PR_DIR/main/." "$REPO/"
+fi
+# Fixed dates make the commit ids the same on every scaffold, so a recorded
+# first turn (a case's history_file) cites the commits the replay has.
+export GIT_AUTHOR_DATE="2026-11-03T10:00:00Z" GIT_COMMITTER_DATE="2026-11-03T10:00:00Z"
 git init -q -b main
 git config user.email dev@acme.test
 git config user.name "Acme Dev"
@@ -62,6 +71,8 @@ jq --arg sha "$(git rev-parse "origin/$HEAD_BRANCH")" --slurpfile size "$DATA/si
 # Served as the PR head's root .gitattributes, when the PR has one.
 [ -f "$PR_DIR/files/.gitattributes" ] && cp "$PR_DIR/files/.gitattributes" "$DATA/gitattributes"
 printf '%s' "$REPO" > "$DATA/repo"
+# The fake gh reads the PR head from here, so a push moves it as on GitHub.
+printf '%s' "$ORIGIN" > "$DATA/origin"
 : > "$REPO/.git/gh-calls.log"
 cp "$HERE/bin/gh" "$HOME/.bin/gh"
 chmod +x "$HOME/.bin/gh"
@@ -80,6 +91,8 @@ if command -v xcode-select >/dev/null && [ -x "$(xcode-select -p)/usr/bin/git" ]
   cp "$(xcode-select -p)/usr/bin/git" "$HOME/.bin/git"
   # Fetching from the local origin execs this helper; it's a git builtin.
   ln -s git "$HOME/.bin/git-upload-pack"
+  # Pushing to it execs this one.
+  ln -s git "$HOME/.bin/git-receive-pack"
 fi
 for f in .zshenv .zshrc .bashrc .bash_profile .profile; do
   printf 'export PATH="%s:$PATH"\nexport GH_FIXTURE_DIR="%s"\n' "$HOME/.bin" "$DATA" >> "$HOME/$f"

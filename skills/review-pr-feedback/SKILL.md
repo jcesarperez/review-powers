@@ -84,12 +84,17 @@ overwhelm the user.
 
 Open with your overall verdict: which findings hold and which one matters
 most. Present the verdicts in the conversation and **stop**. Nothing is edited,
-committed, pushed, or replied to before the user answers.
+committed, pushed, replied to, resolved or re-requested before the user answers.
 
 Give them the argument, not just the conclusion: the citation, the strongest
 counterpoint, a value-versus-cost read, your recommendation. The user's call
 on which findings to take is the decision this skill exists to serve — a run that fixes everything the
 reviewer asked has skipped its own point.
+
+End on the plan one answer approves, through to the re-review: the fixes, the
+replies, the threads you will resolve, and who you will ask to look again and
+how. A go-ahead covers what the plan names, and a question left after it tends
+to go unanswered.
 
 Their answer can reframe a premise ("we're pre-GA, deleting data is fine") rather
 than accept or reject. That is a new fact — rerun the reasoning under it, since
@@ -117,9 +122,16 @@ asserts.
 
 An unanswered finding reads as ignored. Concise, kind, non-pedantic: what you
 did and why, pointing at the commit — or, for a rejection, what the code actually
-does. `${CLAUDE_SKILL_DIR}/scripts/reply.sh` posts replies, resolves threads and
-updates the description (no arguments prints its usage); it comes after the gate,
-never before.
+does. `${CLAUDE_SKILL_DIR}/scripts/reply.sh` posts replies, resolves threads, re-requests
+reviews and updates the description (no arguments prints its usage); it comes
+after the gate, never before.
+
+The loop closes when the reviewer looks again. Resolve the threads your pushed
+fixes settle, and leave the rejected ones open so the reviewer can answer your
+reply. Then ask each reviewer whose findings you acted on to review again: a
+person through GitHub's re-request, an automated reviewer through the trigger the
+repo documents (contributing guide, PR template, the bot's own comments). Where
+nothing documents it, say so; a guessed trigger is noise the bot ignores.
 
 **State every deviation plainly**, to the reviewer and to the user: where you
 did something other than what was asked, say so, say why, and invite the

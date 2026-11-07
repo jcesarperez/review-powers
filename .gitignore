@@ -2,3 +2,6 @@
 evals/results/*
 !evals/results/[0-9]*.[0-9]*.[0-9]*/
 evals/results/*/report.html
+
+# Raw session recordings from re-recording a two-turn case; only the trimmed history.jsonl is committed
+evals/*/*/*-*-*-*-*.jsonl

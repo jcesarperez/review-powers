@@ -1,0 +1,74 @@
+[
+  {
+    "id": 8001,
+    "pull_request_review_id": 9301,
+    "user": {
+      "login": "maria-k",
+      "type": "User"
+    },
+    "author_association": "MEMBER",
+    "body": "`rooms.length` counts room lines, not rooms. A group booking 12 Doubles is a single line, so it never reaches 10 and gets no discount.",
+    "path": "src/quotes/routes.ts",
+    "line": 15,
+    "original_line": 15,
+    "side": "RIGHT",
+    "diff_hunk": "@@ -9,7 +9,10 @@ quotesRouter.get(\"/api/v1/quotes/:quoteId\", async (req, res) => {\n   const quote = await findQuote(req.params.quoteId);\n   if (!quote) return res.status(404).json({ error: \"quote not found\" });\n \n-  const total = await applyDiscount(quoteTotal(quote), quote.discountCode);\n+  const subtotal = quoteTotal(quote);\n+  const total = quote.discountCode\n+    ? await applyDiscount(subtotal, quote.discountCode)\n+    : groupDiscount(subtotal, quote.rooms.length);",
+    "created_at": "2026-11-04T09:10:00Z",
+    "updated_at": "2026-11-04T09:10:00Z",
+    "html_url": "https://github.com/acme/hotel-api/pull/203#discussion_r8001"
+  },
+  {
+    "id": 8002,
+    "pull_request_review_id": 9301,
+    "user": {
+      "login": "maria-k",
+      "type": "User"
+    },
+    "author_association": "MEMBER",
+    "body": "This takes 0.05% off, not 5%. `GROUP_DISCOUNT` should be `5`, or this line should divide it by 100.",
+    "path": "src/discounts/discounts.ts",
+    "line": 17,
+    "original_line": 17,
+    "side": "RIGHT",
+    "diff_hunk": "@@ -6,3 +10,9 @@ export async function applyDiscount(\n   // Only the launch code exists for now.\n   return code === \"LAUNCH10\" ? total * 0.9 : total;\n }\n+\n+// The group discount does not stack with a discount code: a quote with a code\n+// gets the code's discount instead.\n+export function groupDiscount(total: number, rooms: number): number {\n+  return rooms >= GROUP_MIN_ROOMS ? total * (1 - GROUP_DISCOUNT) : total;",
+    "created_at": "2026-11-04T09:14:00Z",
+    "updated_at": "2026-11-04T09:14:00Z",
+    "html_url": "https://github.com/acme/hotel-api/pull/203#discussion_r8002"
+  },
+  {
+    "id": 8003,
+    "pull_request_review_id": 9302,
+    "user": {
+      "login": "acme-review-bot[bot]",
+      "type": "Bot"
+    },
+    "author_association": "NONE",
+    "body": "**Possible bug.** Any code other than `LAUNCH10` skips the group discount too: `applyDiscount` returns the total unchanged for an unknown code, and the group branch never runs. A 12-room group that enters an expired code pays full price.",
+    "path": "src/quotes/routes.ts",
+    "line": 14,
+    "original_line": 14,
+    "side": "RIGHT",
+    "diff_hunk": "@@ -9,7 +9,10 @@ quotesRouter.get(\"/api/v1/quotes/:quoteId\", async (req, res) => {\n   const quote = await findQuote(req.params.quoteId);\n   if (!quote) return res.status(404).json({ error: \"quote not found\" });\n \n-  const total = await applyDiscount(quoteTotal(quote), quote.discountCode);\n+  const subtotal = quoteTotal(quote);\n+  const total = quote.discountCode\n+    ? await applyDiscount(subtotal, quote.discountCode)",
+    "created_at": "2026-11-04T09:31:00Z",
+    "updated_at": "2026-11-04T09:31:00Z",
+    "html_url": "https://github.com/acme/hotel-api/pull/203#discussion_r8003"
+  },
+  {
+    "id": 8004,
+    "pull_request_review_id": 9302,
+    "user": {
+      "login": "acme-review-bot[bot]",
+      "type": "Bot"
+    },
+    "author_association": "NONE",
+    "body": "**Maintainability.** Discount rules are now spread across two functions and the route. Consider introducing a `DiscountPolicy` class with a registry of rules (codes, group size, future loyalty tiers), so new discounts can be added without touching the route.",
+    "path": "src/discounts/discounts.ts",
+    "line": 16,
+    "original_line": 16,
+    "side": "RIGHT",
+    "diff_hunk": "@@ -6,3 +10,9 @@ export async function applyDiscount(\n   // Only the launch code exists for now.\n   return code === \"LAUNCH10\" ? total * 0.9 : total;\n }\n+\n+// The group discount does not stack with a discount code: a quote with a code\n+// gets the code's discount instead.\n+export function groupDiscount(total: number, rooms: number): number {",
+    "created_at": "2026-11-04T09:31:00Z",
+    "updated_at": "2026-11-04T09:31:00Z",
+    "html_url": "https://github.com/acme/hotel-api/pull/203#discussion_r8004"
+  }
+]

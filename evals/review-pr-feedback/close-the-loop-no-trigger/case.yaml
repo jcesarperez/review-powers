@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: review-pr-feedback-close-the-loop-no-trigger
+tags: [review-pr-feedback, close-the-loop]
+context:
+  scaffold_script: scaffold.sh
+  # Turn 1, recorded without CONTRIBUTING.md: the skill's report on PR 203.
+  history_file: history.jsonl

@@ -34,10 +34,19 @@ as the PR's author.
 
 The fake `gh` serves the PR from `prs/<n>/*.json` and logs every call to
 `.git/gh-calls.log`. Reads are answered. Writes (comments, replies, reviews,
-edits, `resolveReviewThread`) are logged as `WRITE` and faked, so the
-`gate-no-writes` grader can check that nothing was posted before the user
+edits, review requests, `resolveReviewThread`) are logged as `WRITE` and faked,
+so the `gate-no-writes` grader can check that nothing was posted before the user
 decided. The comment files feed the REST endpoints, `gh pr view --json
 comments,reviews` and GraphQL alike.
+
+Each `WRITE` is followed by a `POSTED` line for graders:
+`POSTED<TAB><kind><TAB><target><TAB><body>`, the body on one line with `\n` for
+newlines. Kinds: `reply` (target: the comment or thread id), `conversation-comment`,
+`review`, `rereview` (target: the logins, from REST `requested_reviewers` or
+`gh pr edit --add-reviewer`), `unrequest`, `resolve` (target: the thread id),
+`description`, `other`. A posted conversation comment or inline reply is added
+to the served comment files, so a later read shows it. The PR head is read from
+the local origin, so a push moves it, as on GitHub.
 
 It answers every call the skills' scripts make: `pr view --json`, `pr diff`,
 `pr checks --json`, `repo view` (default branch), the three comment feeds
@@ -75,7 +84,34 @@ fields. A PR without tickets answers "not found".
 To add a PR: create `prs/<n>/pr.json` (the `gh pr view --json` shape) and
 `prs/<n>/files/` (files that differ from `base/`). Optional
 `review_comments.json`, `issue_comments.json` and `reviews.json` use the REST
-API shapes; optional `tickets/` holds the tickets the PR's chain reaches.
+API shapes; optional `tickets/` holds the tickets the PR's chain reaches;
+optional `main/` holds files on `main` that the PR doesn't touch (PR 203's
+`CONTRIBUTING.md`). `NO_MAIN_FILES=1 setup-pr.sh <n> author` leaves `main/` out.
+Commits get fixed dates, so commit ids are the same on every scaffold.
+
+## Two-turn cases
+
+`claude plugin eval` runs one prompt per case. A case with
+`context.history_file` resumes a recorded session and sends `prompt.md` as the
+next turn; the scaffold still builds a fresh workspace. The `close-the-loop`
+cases use this: `history.jsonl` is the first turn of the matching `-gate` case
+(the report, stopped at the gate), and the prompt is the user's go-ahead. The
+first turn's gate graders live in the `-gate` case, since a resumed run only
+sees the second turn's calls.
+
+The recording holds the skill text of the run that made it, so re-record after
+changing `review-pr-feedback`: run the `-gate` case with `--keep-temp`, copy
+`<tmp>/config/projects/*/*.jsonl` over `history.jsonl`, and drop the request
+cache and the user's email:
+
+```bash
+jq -c 'select((.type | tostring | test("^api-request")) | not)' session.jsonl \
+  | sed 's/you@example\.com/ana-dev@acme.test/g' > history.jsonl
+```
+
+It also holds the absolute path of the plugin it ran from (the skill's script
+paths). From another checkout those paths miss and the agent finds its own way
+to post; the graders read the fake `gh` log either way.
 
 ## Cases
 
@@ -88,6 +124,10 @@ API shapes; optional `tickets/` holds the tickets the PR's chain reaches.
 
 | `review-pr-feedback/verdict-per-comment` | 201: cancel quotes; four inline comments | One right comment, one wrong (reviewer misreads the SQL), one right but out of scope, one trivial but cheap → do it |
 | `review-pr-feedback/all-feeds` | 202: quotes expire after 14 days; comments inline, in the conversation and in a bot review body | Every comment gets a verdict, and the reply says which feeds it read |
+| `review-pr-feedback/close-the-loop-gate` | 203: group discount for 10+ rooms; a human and a bot each with one right and one wrong finding; `CONTRIBUTING.md` documents the bot's trigger, `/acme-review rerun` | Right verdicts, and the gate's plan names resolving the fixed threads, re-requesting `maria-k` and the bot's trigger |
+| `review-pr-feedback/close-the-loop` | 203, second turn: "Go ahead with your recommendations." | `maria-k` re-requested, `/acme-review rerun` posted, fixed threads resolved, rejected ones answered and left open |
+| `review-pr-feedback/close-the-loop-no-trigger-gate` | 203 without `CONTRIBUTING.md` | The plan says the bot's trigger isn't documented instead of guessing one |
+| `review-pr-feedback/close-the-loop-no-trigger` | 203 without `CONTRIBUTING.md`, second turn | Nothing invented posted to the bot, the reply says its trigger is unknown, `maria-k` still re-requested |
 
 Every `review-pr` case also checks the repo afterwards, with file graders
 (there are no command graders): `.git/HEAD` still says `main`, and `file_exists`
@@ -95,8 +135,9 @@ finds no branch under `.git/refs/heads` and no worktree under `.git/worktrees`
 created during the run. They fail when a PR checkout leaves a `pr-<n>` branch or
 a worktree behind.
 
-Every case also checks: a reader who doesn't know the code understands the
-problem, the language is plain, there is no preamble, and nothing was written
-to GitHub. The `review-pr-feedback` cases also check the gate after the first
-turn: no `Edit`/`Write`, the tempting cheap fix still undone, no new commits
-and no `AskUserQuestion`.
+Every first-turn case also checks: a reader who doesn't know the code
+understands the problem, the language is plain, there is no preamble, and
+nothing was written to GitHub (the `close-the-loop` gate cases keep only the
+last two). The `review-pr-feedback` first-turn cases also check the gate: no
+`Edit`/`Write`, the tempting cheap fix still undone, no new commits and no
+`AskUserQuestion`.

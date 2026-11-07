@@ -7,8 +7,11 @@
 #   reply.sh inline   <PR> <comment-id> <body-file|->   reply to an inline review comment
 #   reply.sh comment  <PR> <body-file|->                post a conversation comment on the PR
 #   reply.sh resolve  <thread-id>                       resolve a review thread (id from feeds.md)
+#   reply.sh rereview <PR> <login>...                   ask people to review again (GitHub's re-request)
 #   reply.sh describe <PR> <body-file|->                replace the PR description
 # <PR> is a URL, owner/repo#N or N. Comment ids and thread ids are in feeds.md.
+# rereview is for people: GitHub refuses review requests to bot accounts, and an
+# automated reviewer has its own trigger, usually a comment (post it with `comment`).
 # Needs: gh, jq.
 
 set -euo pipefail
@@ -57,6 +60,16 @@ case "$cmd" in
          -f id="$1" --jq '.data.resolveReviewThread.thread | "\(.id) resolved=\(.isResolved)"' >"$TMP/out" 2>"$ERRF"; then
       echo "resolve thread: $(tail -n 1 "$TMP/out")"
     else die "resolve thread failed: $(gh_err)"; fi ;;
+  rereview)
+    [ $# -ge 2 ] || usage
+    resolve_pr "$1"; shift
+    # REST requested_reviewers also re-requests someone who already reviewed.
+    args=()
+    for login in "$@"; do
+      case "$login" in *'[bot]') die "$login is a bot; GitHub won't request its review. Use its documented trigger instead." ;; esac
+      args+=(-f "reviewers[]=$login")
+    done
+    post "re-requested review from $* on #$NUMBER" -X POST "repos/$OWNER/$REPO/pulls/$NUMBER/requested_reviewers" "${args[@]}" ;;
   describe)
     [ $# -eq 2 ] || usage
     resolve_pr "$1"; body_ref "$2"

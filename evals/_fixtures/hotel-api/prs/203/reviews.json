@@ -1,0 +1,26 @@
+[
+  {
+    "id": 9301,
+    "user": {
+      "login": "maria-k",
+      "type": "User"
+    },
+    "author_association": "MEMBER",
+    "body": "Nice and small. Two things inline, the room count is the one that matters.",
+    "state": "CHANGES_REQUESTED",
+    "submitted_at": "2026-11-04T09:15:00Z",
+    "html_url": "https://github.com/acme/hotel-api/pull/203#pullrequestreview-9301"
+  },
+  {
+    "id": 9302,
+    "user": {
+      "login": "acme-review-bot[bot]",
+      "type": "Bot"
+    },
+    "author_association": "NONE",
+    "body": "## Review summary\n\nAdds a 5% discount for groups of 10 or more rooms. Two comments inline.",
+    "state": "COMMENTED",
+    "submitted_at": "2026-11-04T09:31:00Z",
+    "html_url": "https://github.com/acme/hotel-api/pull/203#pullrequestreview-9302"
+  }
+]

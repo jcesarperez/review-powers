@@ -2,7 +2,12 @@
 # Fake `gh` for evals. Serves one PR from fixture files and logs every call.
 # Reads, it answers from $GH_FIXTURE_DIR. Writes (comments, reviews, edits),
 # it logs as WRITE and pretends they worked, so graders can tell whether the
-# skill acted before the user decided.
+# skill acted before the user decided. Each WRITE is followed by one line
+#   POSTED<TAB><kind><TAB><target><TAB><body, newlines as \n>
+# kind: reply (target: comment or thread id), conversation-comment, review,
+# rereview (target: logins), unrequest, resolve (target: thread id),
+# description, other. Graders match on it: who was asked to review again,
+# which thread was resolved, what a comment said.
 #
 # $GH_FIXTURE_DIR must contain:
 #   pr.json                 the PR as `gh pr view --json` would return it
@@ -14,7 +19,11 @@
 #   reviews.json            optional, review bodies (REST shape)
 #   viewer                  optional, the logged-in login (default: reviewer)
 #   gitattributes           optional, the PR head's root .gitattributes
+#   origin                  optional, path to the bare origin; the PR head is read from it
 #   resolved.txt            written by the fake: thread ids resolved so far
+#
+# Posted conversation comments and inline replies are appended to the comment
+# files, so a later read shows them, as on GitHub.
 #
 # The three optional comment files also feed `gh pr view --json comments,reviews`
 # and GraphQL reviewThreads/comments/reviews, so every way of reading them agrees.
@@ -31,6 +40,7 @@ VIEWER="$(cat "$DATA/viewer" 2>/dev/null || echo reviewer)"
 
 log() { printf '%s\t%s\n' "$1" "gh $ARGS" >> "$LOG"; }
 ARGS="$*"
+ORIG=("$@")
 
 # Pull --jq / --json / -q out of the args; keep the rest positional.
 JQ="" JSON="" METHOD="" HAS_FIELDS="" NAME_ONLY=""
@@ -56,9 +66,12 @@ out() { if [ -n "$JQ" ]; then jq -r "$JQ"; else cat; fi; }
 or_empty() { if [ -f "$DATA/$1" ]; then cat "$DATA/$1"; else echo '[]'; fi; }
 # pr.json with comments/reviews taken from the REST files, when they exist.
 pr_json() {
-  jq --argjson ic "$(or_empty issue_comments.json)" --argjson rv "$(or_empty reviews.json)" \
+  local head=""
+  [ -f "$DATA/origin" ] && head="$(git --git-dir="$(cat "$DATA/origin")" rev-parse "refs/heads/$HEAD_BRANCH" 2>/dev/null)"
+  jq --arg head "$head" --argjson ic "$(or_empty issue_comments.json)" --argjson rv "$(or_empty reviews.json)" \
      --arg has_ic "$([ -f "$DATA/issue_comments.json" ] && echo 1)" --arg has_rv "$([ -f "$DATA/reviews.json" ] && echo 1)" '
     (if $has_ic == "1" then .comments = [$ic[] | {id: ("IC_" + (.id|tostring)), author: {login: .user.login}, authorAssociation: .author_association, body, createdAt: .created_at, url: .html_url}] else . end)
+    | (if $head != "" then .headRefOid = $head else . end)
     | (if $has_rv == "1" then .reviews = [$rv[] | {id: ("PRR_" + (.id|tostring)), author: {login: .user.login}, authorAssociation: .author_association, body, state, submittedAt: .submitted_at}] else . end)' "$PR"
 }
 # One GraphQL answer that covers the usual PR-feedback queries; --jq picks from it.
@@ -78,7 +91,100 @@ graphql() {
       reviews: page([$rv[] | {id: ("PRR_" + (.id|tostring)), databaseId: .id, body, state, author: who, submittedAt: .submitted_at, url: .html_url}])
     }}}}'
 }
-write() { log WRITE; echo '{"id": 1, "html_url": "https://github.com/acme/hotel-api/pull/'"$NUMBER"'#fake"}' | out; exit 0; }
+# read_ref <value>: the text behind @file / @- (stdin), else the value itself.
+read_ref() {
+  case "$1" in
+    @-) cat ;;
+    @*) cat "${1#@}" 2>/dev/null ;;
+    *) printf '%s' "$1" ;;
+  esac
+}
+# record: works out what a write posts, from the original args, and logs POSTED.
+record() {
+  local kind=other target="" body="" reviewers="" in_reply="" input="" thread="" i a v
+  i=0
+  while [ $i -lt ${#ORIG[@]} ]; do
+    a="${ORIG[$i]}"; v="${ORIG[$((i + 1))]:-}"
+    # `gh pr comment -F <file>` is --body-file; for `gh api`, -F is a field.
+    if [ "$a" = -F ] && [ "$cmd" != api ]; then a=--body-file; fi
+    case "$a" in
+      -f|-F|--field|--raw-field)
+        case "$v" in
+          body=*) if [ "$a" = -f ] || [ "$a" = --raw-field ]; then body="${v#body=}"; else body="$(read_ref "${v#body=}")"; fi ;;
+          reviewers\[\]=*|reviewers=*) reviewers="$reviewers ${v#*=}" ;;
+          in_reply_to=*) in_reply="${v#in_reply_to=}" ;;
+          threadId=*|id=*|pullRequestReviewThreadId=*) thread="${v#*=}" ;;
+        esac
+        i=$((i + 2)); continue ;;
+      --input) input="$(read_ref "@$v")"; i=$((i + 2)); continue ;;
+      --body|-b) body="$v"; i=$((i + 2)); continue ;;
+      --body=*) body="${a#--body=}" ;;
+      --body-file) body="$(if [ "$v" = - ]; then cat; else cat "$v" 2>/dev/null; fi)"; i=$((i + 2)); continue ;;
+      --add-reviewer) reviewers="$reviewers $(printf '%s' "$v" | tr ',' ' ')"; i=$((i + 2)); continue ;;
+      --add-reviewer=*) reviewers="$reviewers $(printf '%s' "${a#*=}" | tr ',' ' ')" ;;
+    esac
+    i=$((i + 1))
+  done
+  if [ -n "$input" ]; then
+    [ -n "$body" ] || body="$(printf '%s' "$input" | jq -r '.body // empty' 2>/dev/null)"
+    [ -n "$reviewers" ] || reviewers="$(printf '%s' "$input" | jq -r '(.reviewers // []) | join(" ")' 2>/dev/null)"
+    [ -n "$in_reply" ] || in_reply="$(printf '%s' "$input" | jq -r '.in_reply_to // empty' 2>/dev/null)"
+  fi
+  local path="${sub#/}"
+  case "$cmd $sub" in
+    "pr comment"*|"issue comment"*) kind=conversation-comment ;;
+    "pr review"*) kind=review ;;
+    "pr edit"*)
+      if [ -n "$reviewers" ]; then kind=rereview; elif [ -n "$body" ]; then kind=description; fi ;;
+    "api graphql")
+      case "$ARGS" in
+        *resolveReviewThread*) kind=resolve; target="$(printf '%s\n' "$ARGS" | sed -n 's/.*[ =":]\(PRRT_[A-Za-z0-9_]*\).*/\1/p' | head -n 1)" ;;
+        *requestReviews*) kind=rereview; target="graphql: $ARGS" ;;
+        *addPullRequestReviewThreadReply*) kind=reply; target="$thread" ;;
+        *addComment*) kind=conversation-comment ;;
+      esac ;;
+    "api "*)
+      case "$path" in
+        repos/*/pulls/*/comments/*/replies) kind=reply; target="$(printf '%s' "$path" | sed 's|.*/comments/\([0-9]*\)/replies|\1|')" ;;
+        repos/*/pulls/*/comments) if [ -n "$in_reply" ]; then kind=reply; target="$in_reply"; else kind=review; fi ;;
+        repos/*/issues/*/comments) kind=conversation-comment ;;
+        repos/*/pulls/*/requested_reviewers) if [ "$METHOD" = DELETE ]; then kind=unrequest; else kind=rereview; fi ;;
+        repos/*/pulls/*/reviews) kind=review ;;
+        repos/*/pulls/*) kind=description ;;
+      esac ;;
+  esac
+  case "$kind" in rereview|unrequest) [ -n "$target" ] || target="$(printf '%s' "$reviewers" | sed 's/^ *//')" ;; esac
+  printf 'POSTED\t%s\t%s\t%s\n' "$kind" "$target" "$(printf '%s' "$body" | awk 'BEGIN{ORS="\\n"} {print}' | sed 's/\\n$//')" >> "$LOG"
+  serve_posted "$kind" "$target" "$body"
+}
+# serve_posted <kind> <target> <body>: adds a posted comment to what reads serve,
+# and sets NEW_ID and NEW_URL for the answer.
+NEW_ID=1; NEW_URL="https://github.com/acme/hotel-api/pull/$NUMBER"
+serve_posted() {
+  local now f
+  now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  NEW_ID=$(( 90000 + $(grep -c '^POSTED' "$LOG") ))
+  case "$1" in
+    conversation-comment)
+      f="$DATA/issue_comments.json"; [ -f "$f" ] || echo '[]' > "$f"
+      NEW_URL="https://github.com/acme/hotel-api/pull/$NUMBER#issuecomment-$NEW_ID"
+      jq --argjson id "$NEW_ID" --arg v "$VIEWER" --arg b "$3" --arg t "$now" --arg u "$NEW_URL" \
+        '. + [{id: $id, user: {login: $v, type: "User"}, author_association: "MEMBER", body: $b, created_at: $t, updated_at: $t, html_url: $u}]' \
+        "$f" > "$f.new" && mv "$f.new" "$f" ;;
+    reply)
+      f="$DATA/review_comments.json"
+      case "$2" in ''|*[!0-9]*) return 0 ;; esac
+      [ -f "$f" ] || return 0
+      NEW_URL="https://github.com/acme/hotel-api/pull/$NUMBER#discussion_r$NEW_ID"
+      jq --argjson id "$NEW_ID" --argjson to "$2" --arg v "$VIEWER" --arg b "$3" --arg t "$now" --arg u "$NEW_URL" '
+        (map(select(.id == $to)) | first) as $p
+        | if $p == null then . else . + [{id: $id, in_reply_to_id: ($p.in_reply_to_id // $p.id), user: {login: $v, type: "User"},
+            author_association: "MEMBER", body: $b, path: $p.path, line: $p.line, original_line: $p.original_line, side: $p.side,
+            diff_hunk: $p.diff_hunk, created_at: $t, updated_at: $t, html_url: $u}] end' \
+        "$f" > "$f.new" && mv "$f.new" "$f" ;;
+  esac
+}
+write() { log WRITE; record; jq -n --argjson id "$NEW_ID" --arg u "$NEW_URL" '{id: $id, html_url: $u}' | out; exit 0; }
 RESOLVED="$DATA/resolved.txt"
 
 cmd="${POS[0]:-}"; sub="${POS[1]:-}"
@@ -117,9 +223,9 @@ case "$cmd $sub" in
       case "$ARGS" in
         *resolveReviewThread*)
           # Remember the resolved thread, so a later reviewThreads query shows it.
-          id="$(printf '%s\n' "$ARGS" | sed -n 's/.*[ =]\(PRRT_[A-Za-z0-9_]*\).*/\1/p' | head -n 1)"
+          id="$(printf '%s\n' "$ARGS" | sed -n 's/.*[ =":]\(PRRT_[A-Za-z0-9_]*\).*/\1/p' | head -n 1)"
           [ -z "$id" ] || echo "$id" >> "$RESOLVED"
-          log WRITE
+          log WRITE; record
           jq -n --arg id "$id" '{data: {resolveReviewThread: {thread: {id: $id, isResolved: true}}}}' | out; exit 0 ;;
         *mutation*) write ;;
       esac
@@ -134,6 +240,7 @@ case "$cmd $sub" in
         else echo "gh: Not Found (HTTP 404)" >&2; exit 1; fi ;;
       repos/*/pulls/*/comments) or_empty review_comments.json | out ;;
       repos/*/pulls/*/reviews) or_empty reviews.json | out ;;
+      repos/*/pulls/*/requested_reviewers) echo '{"users": [], "teams": []}' | out ;;
       repos/*/issues/*/comments) or_empty issue_comments.json | out ;;
       repos/*/pulls/*/files)
         jq -R -s 'split("\n") | map(select(length > 0) | split("\t") | {filename: .[1], status: (if .[0] == "A" then "added" elif .[0] == "D" then "removed" else "modified" end)})' "$DATA/name-status.txt" | out ;;

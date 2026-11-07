@@ -26,7 +26,7 @@ Skills that turn AI code reviews into decision reports: the user reviews the rev
 skills/<name>/SKILL.md      the skills
 skills/<name>/scripts/      what the skills run: fetch-pr.sh; feeds.sh, reply.sh; lib/feeds.sh in both
 .claude-plugin/             plugin + marketplace manifests (version lives in plugin.json)
-evals/<skill>/<case>/       eval cases: prompt.md, case.yaml, graders/, scaffold.sh
+evals/<skill>/<case>/       eval cases: prompt.md, case.yaml, graders/, scaffold.sh (+ history.jsonl for a second turn)
 evals/_fixtures/            fake hotel-api repo, its PRs, and a fake `gh`
 CHANGELOG.md                Keep a Changelog, semver
 ```
