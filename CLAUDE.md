@@ -34,7 +34,9 @@ CHANGELOG.md                Keep a Changelog, semver
 ## Evals
 
 - **Run:** `claude plugin eval . --scaffold --allow-tools Bash Edit Write --judge-model sonnet`
-- **Smoke:** add `--runs 1 --ablation none`; filter with `--tag` or `--case`.
-- **Before and after:** run a skill's evals on both sides of a change.
+  Without a terminal (an agent's shell), add `--trust-plugin`.
+- **Smoke:** add `--runs 1 --ablation none`; filter with `--tag` or `--case`. Use it while iterating.
+- **Before and after:** run the changed skill's tag, 3 runs, on both sides of a change; the full suite on release.
+- **Graders:** an LLM grader asks a checkable question (is the problem stated? is there a case with real values?), never a style score.
 - **More:** fixtures, graders, the fake `gh` and adding a case → `evals/README.md`.
 - **Results:** runs land in `evals/results/<timestamp>/` and are git-ignored. On release, copy the full-suite run's `aggregate-result.json` (no `--tag`) to `evals/results/<version>/` and commit it with the release. Check `suite.plugins[0].version` matches. Never commit `report.html` or timestamped folders.

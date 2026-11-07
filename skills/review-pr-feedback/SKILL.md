@@ -24,9 +24,9 @@ standing in: a `file:line` from the wrong commit is fiction.
 ## Verify, don't believe
 
 A finding is a claim, not a fact. Read the code it points at — and, when it is
-about a symbol the diff merely uses, the code *behind* that. Cite `file:line`, or
-say **unverified** and what would settle it. Prefer an observation over an
-argument: run the test, inspect the artifact, query the database.
+about a symbol the diff merely uses, the code *behind* that. Settle it from what
+you read, or say **unverified** and what would settle it. Prefer an observation
+over an argument: run the test, inspect the artifact, query the database.
 
 Apply this symmetrically. Human and AI reviewers are both wrong sometimes; what
 differs is **scope**, not credibility — an agent is likelier to ask for work past
@@ -45,15 +45,15 @@ you find those.
 
 ## Explain it to someone who doesn't know the code
 
-The user often hasn't read this code, so `file:line` citations alone don't
-land. Skip preambles and keep prose brief and plain: what goes wrong and why,
-in everyday words. Names in backticks point at the code; they don't explain
-it. A term they would have to look up gets a few words or stays out.
+The user decides from the report and rarely opens the code. Skip preambles
+and keep prose brief and plain: what goes wrong and why, in everyday words.
+Names in backticks point at the code; they don't explain it. A term they
+would have to look up gets a few words or stays out.
 
-**Lead each finding with one concrete case**, then the citations as evidence.
-An abstract point needs numbers: "3 shirts in M + 1 in L, merged by product →
-the warehouse ships 4 in M". A finding that is already one input and one wrong
-result is its own case, and a sentence is enough.
+**Lead each finding with one concrete case**, then why it happens.
+An abstract point needs numbers: "3 shirts in M + 1 in L, merged by
+product → the warehouse ships 4 in M". A finding that is already one input
+and one wrong result is its own case, and a sentence is enough.
 
 Add a view only where prose would leave the reader rebuilding a shape or a
 flow. Pick the smallest one that makes the point, next to the sentence it
@@ -86,7 +86,7 @@ Open with your overall verdict: which findings hold and which one matters
 most. Present the verdicts in the conversation and **stop**. Nothing is edited,
 committed, pushed, replied to, resolved or re-requested before the user answers.
 
-Give them the argument, not just the conclusion: the citation, the strongest
+Give them the argument, not just the conclusion: the strongest
 counterpoint, a value-versus-cost read, your recommendation. The user's call
 on which findings to take is the decision this skill exists to serve — a run that fixes everything the
 reviewer asked has skipped its own point.
@@ -128,10 +128,9 @@ after the gate, never before.
 
 The loop closes when the reviewer looks again. Resolve the threads your pushed
 fixes settle, and leave the rejected ones open so the reviewer can answer your
-reply. Then ask each reviewer whose findings you acted on to review again: a
-person through GitHub's re-request, an automated reviewer through the trigger the
-repo documents (contributing guide, PR template, the bot's own comments). Where
-nothing documents it, say so; a guessed trigger is noise the bot ignores.
+reply. Then ask each reviewer whose findings you acted on to review again. A
+bot answers only to the trigger the repo documents; where none is documented,
+say so rather than guess.
 
 **State every deviation plainly**, to the reviewer and to the user: where you
 did something other than what was asked, say so, say why, and invite the

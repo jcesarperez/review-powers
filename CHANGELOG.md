@@ -13,7 +13,7 @@
 
 ### Changed
 
-- `review-pr` and `review-pr-feedback` explain what goes wrong and why in plain words, with code names as pointers rather than the explanation, and a worked example with numbers when the point is abstract.
+- `review-pr` and `review-pr-feedback` explain what goes wrong and why in plain words, leading each finding with a concrete case (with numbers when the point is abstract) and then why it happens. `file:line` stays where it places an inline comment, not in the explanation.
 - A view only where prose would leave the reader rebuilding a shape or a flow, next to the sentence it supports: a `diff` for a changed shape or a proposed fix, a call tree for control flow, a sequence diagram for cross-service interactions.
 - Both reports open with the verdict.
 

@@ -93,15 +93,15 @@ whether the change is reachable by keyboard and screen reader.
 
 ## Explain it to someone who doesn't know the code
 
-The user often hasn't read this code, so `file:line` citations alone don't
-land. Skip preambles and keep prose brief and plain: what goes wrong and why,
-in everyday words. Names in backticks point at the code; they don't explain
-it. A term they would have to look up gets a few words or stays out.
+The user decides from the report and rarely opens the code. Skip preambles
+and keep prose brief and plain: what goes wrong and why, in everyday words.
+Names in backticks point at the code; they don't explain it. A term they
+would have to look up gets a few words or stays out.
 
-**Lead each finding with one concrete case**, then the citations as evidence.
-An abstract point needs numbers: "3 shirts in M + 1 in L, merged by product →
-the warehouse ships 4 in M". A finding that is already one input and one wrong
-result is its own case, and a sentence is enough.
+**Lead each finding with one concrete case**, then why it happens.
+An abstract point needs numbers: "3 shirts in M + 1 in L, merged by
+product → the warehouse ships 4 in M". A finding that is already one input
+and one wrong result is its own case, and a sentence is enough.
 
 Add a view only where prose would leave the reader rebuilding a shape or a
 flow. Pick the smallest one that makes the point, next to the sentence it
@@ -137,9 +137,9 @@ Open with your verdict, then say what you covered — which feeds you read,
 and which questions came back empty versus unexamined.
 
 Then a numbered list of findings the user can act on — ignore, or leave as an
-inline PR comment — each with your own recommendation, weighed against its
-cost to fix, including whether the set warrants a plain comment or a request
-for changes. Do nothing until they choose.
+inline PR comment on its `file:line` — each with your own recommendation,
+weighed against its cost to fix, including whether the set warrants a plain
+comment or a request for changes. Do nothing until they choose.
 
 Concise, kind and non-pedantic govern how a comment is written, never whether
 it is raised. An inline comment's line is part of the comment, so verify where

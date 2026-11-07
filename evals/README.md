@@ -15,6 +15,10 @@ claude plugin eval . --scaffold --allow-tools Bash Edit Write --judge-model sonn
   `Edit` and `Write`, the "no edits before the user decides" graders pass
   trivially.
 - `--judge-model sonnet`: the default judge is too lenient for the writing rubrics.
+- LLM graders ask a checkable question (is the problem stated? is there a
+  case with real values?). Rubrics that score style ("is it plain?") flipped
+  between votes and were removed; how plain a report reads is judged on real
+  PRs.
 - `--tag explain` runs only the explanation cases; `--tag review-pr-feedback`
   only that skill's. `--runs 1 --ablation none`
   makes a cheap smoke run. A full run is about $0.30 per case run.
@@ -135,9 +139,9 @@ finds no branch under `.git/refs/heads` and no worktree under `.git/worktrees`
 created during the run. They fail when a PR checkout leaves a `pr-<n>` branch or
 a worktree behind.
 
-Every first-turn case also checks: a reader who doesn't know the code
-understands the problem, the language is plain, there is no preamble, and
-nothing was written to GitHub (the `close-the-loop` gate cases keep only the
-last two). The `review-pr-feedback` first-turn cases also check the gate: no
+Every first-turn case also checks that nothing was written to GitHub and there
+is no preamble. The `explain` cases also check `finds-the-problem`: the reply
+states the PR's real problem, in any words. The `review-pr-feedback` first-turn
+cases also check the gate: no
 `Edit`/`Write`, the tempting cheap fix still undone, no new commits and no
 `AskUserQuestion`.
