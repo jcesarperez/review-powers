@@ -5,9 +5,16 @@ grades the reply.
 
 ## Run
 
+Evals are optional: each agent run costs about $0.30 and a minute, so run the
+cases a change touches rather than the whole suite (about $10).
+
 ```bash
-claude plugin eval . --scaffold --allow-tools Bash Edit Write --judge-model sonnet
+claude plugin eval . --scaffold --allow-tools Bash Edit Write --judge-model sonnet -j 4
 ```
+
+- `-j 4` runs four at a time; without it they run one by one.
+- By default each case also runs without the plugin, as a baseline, which
+  doubles the cost. `--ablation none` skips it.
 
 - `--scaffold` builds the fixture repo for each case. Without it, cases fail.
 - `--allow-tools Bash Edit Write` lets the skill call `gh` and `git` and edit
@@ -19,9 +26,9 @@ claude plugin eval . --scaffold --allow-tools Bash Edit Write --judge-model sonn
   case with real values?). Rubrics that score style ("is it plain?") flipped
   between votes and were removed; how plain a report reads is judged on real
   PRs.
-- `--tag explain` runs only the explanation cases; `--tag review-pr-feedback`
-  only that skill's. `--runs 1 --ablation none`
-  makes a cheap smoke run. A full run is about $0.30 per case run.
+- `--case <name>` runs one case, `--tag explain` the explanation cases,
+  `--tag review-pr-feedback` that skill's. `--runs 1 --ablation none` makes a
+  smoke run: one run per case instead of three.
 
 ## How the fixtures work
 
