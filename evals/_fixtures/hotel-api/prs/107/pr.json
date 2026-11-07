@@ -1,0 +1,20 @@
+{
+  "number": 107,
+  "title": "Confirm quotes through the PMS's async mode",
+  "body": "At peak times the PMS takes 20+ seconds to create a block, so confirming a big group quote timed out in the web app.\n\nWe now use the PMS's async mode (see `docs/pms.md`): confirming requests the blocks, stores their ids and marks the quote `pending`. The new `block.created` webhook marks the quote `confirmed` once all its blocks exist.",
+  "state": "OPEN",
+  "author": {
+    "login": "emma-dev"
+  },
+  "baseRefName": "main",
+  "headRefName": "feat/pms-async-blocks",
+  "url": "https://github.com/acme/hotel-api/pull/107",
+  "isDraft": false,
+  "reviewDecision": "REVIEW_REQUIRED",
+  "reviews": [],
+  "comments": [],
+  "statusCheckRollup": [
+    { "name": "lint", "status": "COMPLETED", "conclusion": "SUCCESS" },
+    { "name": "unit-tests", "status": "COMPLETED", "conclusion": "SUCCESS" }
+  ]
+}

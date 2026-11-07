@@ -1,0 +1,20 @@
+{
+  "number": 106,
+  "title": "Take the deposit before holding rooms",
+  "body": "Confirming a quote held the rooms first and released them if the deposit failed. Under load, a customer without enough credit took rooms out of the inventory for a moment, and other quotes for the same nights were told the rooms were sold out.\n\nThe deposit is now taken first, so rooms are only held for customers who can pay. The release is no longer needed. Added a test.",
+  "state": "OPEN",
+  "author": {
+    "login": "noah-dev"
+  },
+  "baseRefName": "main",
+  "headRefName": "fix/deposit-before-hold",
+  "url": "https://github.com/acme/hotel-api/pull/106",
+  "isDraft": false,
+  "reviewDecision": "REVIEW_REQUIRED",
+  "reviews": [],
+  "comments": [],
+  "statusCheckRollup": [
+    { "name": "lint", "status": "COMPLETED", "conclusion": "SUCCESS" },
+    { "name": "unit-tests", "status": "COMPLETED", "conclusion": "SUCCESS" }
+  ]
+}

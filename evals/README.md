@@ -121,13 +121,15 @@ to post; the graders read the fake `gh` log either way.
 
 | Case | PR | Checks |
 |---|---|---|
-| `review-pr/explain-contract-change` | 101: endpoint shape changes; invoicing, outside the diff, breaks | Shape shown as a well-formed `diff`, not JSON |
+| `review-pr/explain-contract-change` | 101: endpoint shape changes; invoicing, outside the diff, breaks | Shape shown as a well-formed `diff`, not JSON; the broken invoice shown with a case |
 | `review-pr/explain-with-example` | 102: merging PMS blocks loses stay lengths | Abstract bug explained with a worked example |
-| `review-pr/explain-concrete-finding` | 103: unknown discount code → 500 | Concrete finding: plain sentence, fix as a small `diff`, no other block |
-| `review-pr/ticket-chain` | 105: breakfast per room line; the subtask is satisfied, its parent story decided one meal plan per quote (in a comment) | The finding cites the parent's decision, the parent's comments were read, and the coverage line says the ticket chain was read |
+| `review-pr/explain-concrete-finding` | 103: unknown discount code → 500 | Concrete finding: a case, fix as a small `diff`, no other block |
+| `review-pr/explain-control-flow` | 106: deposit taken before holding rooms; sold out → deposit kept (`main/` has the old flow) | Changed flow as a call tree in `text`, no diagram |
+| `review-pr/explain-cross-service` | 107: async PMS blocks; the webhook can beat the stored block id and is dropped (`main/docs/pms.md` documents the webhook) | The race as a `mermaid` sequence diagram |
+| `review-pr/ticket-chain` | 105: breakfast per room line; the subtask is satisfied, its parent story decided one meal plan per quote (in a comment) | The finding cites the parent's decision, with a case, the parent's comments were read, and the coverage line says the ticket chain was read |
 
-| `review-pr-feedback/verdict-per-comment` | 201: cancel quotes; four inline comments | One right comment, one wrong (reviewer misreads the SQL), one right but out of scope, one trivial but cheap → do it |
-| `review-pr-feedback/all-feeds` | 202: quotes expire after 14 days; comments inline, in the conversation and in a bot review body | Every comment gets a verdict, and the reply says which feeds it read |
+| `review-pr-feedback/verdict-per-comment` | 201: cancel quotes; four inline comments | One right comment (shown with a case), one wrong (reviewer misreads the SQL), one right but out of scope, one trivial but cheap → do it |
+| `review-pr-feedback/all-feeds` | 202: quotes expire after 14 days; comments inline, in the conversation and in a bot review body | Every comment gets a verdict, `>=` answered with real dates, and the reply says which feeds it read |
 | `review-pr-feedback/close-the-loop-gate` | 203: group discount for 10+ rooms; a human and a bot each with one right and one wrong finding; `CONTRIBUTING.md` documents the bot's trigger, `/acme-review rerun` | Right verdicts, and the gate's plan names resolving the fixed threads, re-requesting `maria-k` and the bot's trigger |
 | `review-pr-feedback/close-the-loop` | 203, second turn: "Go ahead with your recommendations." | `maria-k` re-requested, `/acme-review rerun` posted, fixed threads resolved, rejected ones answered and left open |
 | `review-pr-feedback/close-the-loop-no-trigger-gate` | 203 without `CONTRIBUTING.md` | The plan says the bot's trigger isn't documented instead of guessing one |
@@ -141,7 +143,9 @@ a worktree behind.
 
 Every first-turn case also checks that nothing was written to GitHub and there
 is no preamble. The `explain` cases also check `finds-the-problem`: the reply
-states the PR's real problem, in any words. The `review-pr-feedback` first-turn
+states the PR's real problem, in any words. `concrete-example`, in the cases
+that have it, checks that one named problem is shown with a case with real
+values, not only in the abstract. The `review-pr-feedback` first-turn
 cases also check the gate: no
 `Edit`/`Write`, the tempting cheap fix still undone, no new commits and no
 `AskUserQuestion`.
