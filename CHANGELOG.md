@@ -7,6 +7,7 @@
 - `review-pr` runs `fetch-pr.sh` first: one call saves the description, CI per check, every comment feed (inline, conversation, review bodies), whether the PR is stacked, ticket keys, and the diff without generated files (lockfiles, generated clients, OpenAPI specs, anything marked `linguist-generated`). It prints counts and paths; the left-out files are listed with their size and kept in a separate patch.
 - `review-pr-feedback` runs `feeds.sh` first: every feed with thread state (resolved, outdated, replies, bot or human), bot markup stripped, a count per feed including zero, and a check that your checkout is the PR's head commit.
 - `review-pr-feedback` posts through `reply.sh`: inline replies, conversation comments, resolving threads and updating the PR description.
+- `review-pr` reads a PR's code in a detached worktree in its scratch directory, made by `checkout-pr.sh` and removed with `--cleanup` when the reading is done. Your own branch and checkout stay as they are, and no `pr-<n>` branch or stray `<repo>-pr<n>` folder is left behind.
 
 ### Changed
 

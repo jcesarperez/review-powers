@@ -57,6 +57,10 @@ The skills' scripts share `scripts/lib/feeds.sh`, identical in both skill
 folders. Check it with
 `cmp skills/review-pr/scripts/lib/feeds.sh skills/review-pr-feedback/scripts/lib/feeds.sh`.
 
+`skills/review-pr/scripts/checkout-pr.sh 104` (same setup, run from the
+scaffolded repo) makes the detached worktree under `$REVIEW_POWERS_SCRATCH`;
+`... 104 --cleanup` removes it.
+
 To add a PR: create `prs/<n>/pr.json` (the `gh pr view --json` shape) and
 `prs/<n>/files/` (files that differ from `base/`). Optional
 `review_comments.json`, `issue_comments.json` and `reviews.json` use the REST
@@ -72,6 +76,12 @@ API shapes.
 
 | `review-pr-feedback/verdict-per-comment` | 201: cancel quotes; four inline comments | One right comment, one wrong (reviewer misreads the SQL), one right but out of scope, one trivial but cheap → do it |
 | `review-pr-feedback/all-feeds` | 202: quotes expire after 14 days; comments inline, in the conversation and in a bot review body | Every comment gets a verdict, and the reply says which feeds it read |
+
+Every `review-pr` case also checks the repo afterwards, with file graders
+(there are no command graders): `.git/HEAD` still says `main`, and `file_exists`
+finds no branch under `.git/refs/heads` and no worktree under `.git/worktrees`
+created during the run. They fail when a PR checkout leaves a `pr-<n>` branch or
+a worktree behind.
 
 Every case also checks: a reader who doesn't know the code understands the
 problem, the language is plain, there is no preamble, and nothing was written

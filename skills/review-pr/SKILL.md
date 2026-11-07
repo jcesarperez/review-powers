@@ -24,6 +24,9 @@ reads correct in the diff has call sites the diff never mentions, and a
 migration reads fine right up until you look at what queries the column.
 So read past the boundary whenever the change touches something other code
 uses — a worktree checkout of the PR when the diff alone won't settle it.
+`${CLAUDE_SKILL_DIR}/scripts/checkout-pr.sh <PR>` makes one, detached in the
+scratch directory, so the user's checkout stays as it is; `--cleanup` removes
+it once you have read what you need.
 
 Account for the feeds, not just the findings. The description (which states
 intent, and makes claims worth checking rather than trusting), CI, existing
