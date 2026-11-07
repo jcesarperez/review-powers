@@ -124,8 +124,8 @@ to post; the graders read the fake `gh` log either way.
 | `review-pr/explain-contract-change` | 101: endpoint shape changes; invoicing, outside the diff, breaks | Shape shown as a well-formed `diff`, not JSON; the broken invoice shown with a case |
 | `review-pr/explain-with-example` | 102: merging PMS blocks loses stay lengths | Abstract bug explained with a worked example |
 | `review-pr/explain-concrete-finding` | 103: unknown discount code → 500 | Concrete finding: a case, fix as a small `diff`, no other block |
-| `review-pr/explain-control-flow` | 106: deposit taken before holding rooms; sold out → deposit kept (`main/` has the old flow) | Changed flow as a call tree in `text`, no diagram |
-| `review-pr/explain-cross-service` | 107: async PMS blocks; the webhook can beat the stored block id and is dropped (`main/docs/pms.md` documents the webhook) | The race as a `mermaid` sequence diagram |
+| `review-pr/explain-control-flow` | 106: deposit taken before holding rooms; sold out → deposit kept (`main/` has the old flow) | The reply finds the deposit kept on sold-out rooms; no diagram |
+| `review-pr/explain-cross-service` | 107: async PMS blocks; the webhook can beat the stored block id and is dropped (`main/docs/pms.md` documents the webhook) | The reply finds the race |
 | `review-pr/ticket-chain` | 105: breakfast per room line; the subtask is satisfied, its parent story decided one meal plan per quote (in a comment) | The finding cites the parent's decision, with a case, the parent's comments were read, and the coverage line says the ticket chain was read |
 
 | `review-pr-feedback/verdict-per-comment` | 201: cancel quotes; four inline comments | One right comment (shown with a case), one wrong (reviewer misreads the SQL), one right but out of scope, one trivial but cheap → do it |
