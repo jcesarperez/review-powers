@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-11-07
+
 ### Added
 
 - `review-pr` runs `fetch-pr.sh` first: one call saves the description, CI per check, every comment feed (inline, conversation, review bodies), whether the PR is stacked, ticket keys, and the diff without generated files (lockfiles, generated clients, OpenAPI specs, anything marked `linguist-generated`). It prints counts and paths; the left-out files are listed with their size and kept in a separate patch.
@@ -25,4 +27,5 @@
 - `review-pr-feedback`: gives a verdict on each review comment on your PR, fixes what you pick and replies to every comment.
 - Install with the skills CLI (project or global), as a Claude Code plugin, or by copying the folders.
 
+[1.1.0]: https://github.com/jcesarperez/review-powers/releases/tag/v1.1.0
 [1.0.0]: https://github.com/jcesarperez/review-powers/releases/tag/v1.0.0
