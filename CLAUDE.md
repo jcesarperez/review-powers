@@ -33,7 +33,7 @@ CHANGELOG.md                Keep a Changelog, semver
 
 ## Evals
 
-- **Run:** `claude plugin eval . --scaffold --allow-tools Bash Edit Write --judge-model sonnet`
+- **Run:** `claude plugin eval . --scaffold --allow-tools Bash Edit Write --judge-model sonnet -j 4`; without `-j` runs go one at a time (a full suite takes ~30 min instead of ~10).
   Without a terminal (an agent's shell), add `--trust-plugin`.
 - **Smoke:** add `--runs 1 --ablation none`; filter with `--tag` or `--case`. Use it while iterating.
 - **Before and after:** run the changed skill's tag, 3 runs, on both sides of a change; the full suite on release.
