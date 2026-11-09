@@ -141,6 +141,12 @@ inline PR comment on its `file:line` — each with your own recommendation,
 weighed against its cost to fix, including whether the set warrants a plain
 comment or a request for changes. Do nothing until they choose.
 
+Order findings by what ignoring each would cost, worst first: the user may
+stop reading anywhere. Start each with a tag for what it is about: Bug,
+Product, Tests, Design, Docs, Security, Deploy, Conventions, Localization,
+Scope, or a better word when none fits. One tag; when two fit, pick by what
+goes wrong if it's ignored.
+
 Concise, kind and non-pedantic govern how a comment is written, never whether
 it is raised. An inline comment's line is part of the comment, so verify where
 each one actually landed and tell the user.

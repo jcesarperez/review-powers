@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- `review-pr` and `review-pr-feedback` order findings by what ignoring each would cost, worst first (`review-pr-feedback` no longer follows the reviewer's order), and tag each with what it is about: Bug, Product, Tests, Design, Docs, Security, Deploy, Conventions, Localization, Scope, or a better word when none fits.
+
 ## [1.1.0] - 2026-11-07
 
 ### Added

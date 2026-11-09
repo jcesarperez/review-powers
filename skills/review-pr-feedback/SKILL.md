@@ -83,7 +83,13 @@ overwhelm the user.
 ## The gate
 
 Open with your overall verdict: which findings hold and which one matters
-most. Present the verdicts in the conversation and **stop**. Nothing is edited,
+most. Present the verdicts in the conversation and **stop**.
+
+Order findings by what ignoring each would cost, worst first, not in the
+reviewer's order: the user may stop reading anywhere. Start each with a tag
+for what it is about: Bug, Product, Tests, Design, Docs, Security, Deploy,
+Conventions, Localization, Scope, or a better word when none fits. One tag;
+when two fit, pick by what goes wrong if it's ignored. Nothing is edited,
 committed, pushed, replied to, resolved or re-requested before the user answers.
 
 Give them the argument, not just the conclusion: the strongest
