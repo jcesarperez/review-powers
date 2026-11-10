@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+# Fake gh for review-ticket's tests: answers the calls gather.sh and feeds.sh
+# make from files under $FAKE_GH_FIXTURES/gh, and logs every call to
+# $FAKE_GH_LOG. Anything else fails loudly, so a new call needs a fixture.
+#
+#   search prs <KEY> [--owner O]   search/<KEY>.json (filtered by owner), or
+#                                  search/<KEY>.err printed as the error
+#   pr view <N> -R o/r             pr/<o>-<r>-<N>.json
+#   repo view o/r                  repo/<o>-<r>.json
+#   repo clone o/r <dir> -- ...    shallow clone of $FAKE_GH_REMOTES/<r>.git
+#   api [--paginate] <path>        api/<path>.json, [] when missing
+#   api graphql ... -f owner= -f name= -F number=   graphql/<o>-<r>-<N>.json
+# --jq / -q filters apply as in gh. Missing fixtures answer like GitHub does.
+
+set -u
+F="${FAKE_GH_FIXTURES:?FAKE_GH_FIXTURES not set}/gh"
+printf '%s\n' "$*" >>"${FAKE_GH_LOG:-/dev/null}"
+
+JQ="" REPO_ARG="" OWNER="" GQL_OWNER="" GQL_NAME="" GQL_NUMBER="" POS=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --jq|-q) JQ="$2"; shift ;;
+    -R) REPO_ARG="$2"; shift ;;
+    --owner) OWNER="$2"; shift ;;
+    --json|--limit) shift ;;
+    --paginate) ;;
+    -f|-F) case "$2" in owner=*) GQL_OWNER="${2#owner=}" ;; name=*) GQL_NAME="${2#name=}" ;; number=*) GQL_NUMBER="${2#number=}" ;; esac; shift ;;
+    --) shift; break ;;
+    *) POS+=("$1") ;;
+  esac
+  shift
+done
+
+out() { if [ -n "$JQ" ]; then jq -r "$JQ" "$1"; else cat "$1"; fi; }
+slugfile() { printf '%s-%s' "${1%%/*}" "${1#*/}"; }
+
+case "${POS[0]:-} ${POS[1]:-}" in
+  "search prs")
+    key="${POS[2]//\"/}"   # gather.sh searches the key as a quoted phrase
+    if [ -f "$F/search/$key.err" ]; then cat "$F/search/$key.err" >&2; exit 1; fi
+    [ -f "$F/search/$key.json" ] || { echo '[]'; exit 0; }
+    jq --arg o "$OWNER" 'map(select($o == "" or (.repository.nameWithOwner | startswith($o + "/"))))' "$F/search/$key.json" ;;
+  "pr view")
+    f="$F/pr/$(slugfile "$REPO_ARG")-${POS[2]}.json"
+    [ -f "$f" ] || { echo "GraphQL: Could not resolve to a PullRequest with the number of ${POS[2]}. (repository.pullRequest)" >&2; exit 1; }
+    out "$f" ;;
+  "repo view")
+    f="$F/repo/$(slugfile "${POS[2]}").json"
+    [ -f "$f" ] || { echo "GraphQL: Could not resolve to a Repository with the name '${POS[2]}'. (repository)" >&2; exit 1; }
+    out "$f" ;;
+  "repo clone")
+    src="${FAKE_GH_REMOTES:?}/${POS[2]#*/}.git"
+    [ -d "$src" ] || { echo "GraphQL: Could not resolve to a Repository with the name '${POS[2]}'. (repository)" >&2; exit 1; }
+    git clone -q --depth 1 "file://$src" "${POS[3]}" ;;
+  "api graphql")
+    f="$F/graphql/$GQL_OWNER-$GQL_NAME-$GQL_NUMBER.json"
+    [ -f "$f" ] || exit 0
+    out "$f" ;;
+  api\ *)
+    path="${POS[1]%%\?*}"
+    f="$F/api/$path.json"
+    if [ -f "$f" ]; then out "$f"
+    elif [ -n "$JQ" ]; then echo '[]' | jq -r "$JQ"
+    else echo '[]'; fi ;;
+  *)
+    echo "fake gh: unsupported call: $*" >&2; exit 2 ;;
+esac

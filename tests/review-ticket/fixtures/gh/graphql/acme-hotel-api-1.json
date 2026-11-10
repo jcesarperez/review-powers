@@ -1,0 +1,2 @@
+{"data": {"repository": {"pullRequest": {"reviewThreads": {"pageInfo": {"hasNextPage": false, "endCursor": null},
+  "nodes": [{"id": "T1", "isResolved": true, "isOutdated": false, "comments": {"nodes": [{"databaseId": 11}]}}]}}}}}

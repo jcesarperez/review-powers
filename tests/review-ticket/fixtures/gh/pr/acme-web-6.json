@@ -1,0 +1,3 @@
+{"number": 6, "title": "ABC-100 frontend", "url": "https://github.com/acme/web/pull/6", "state": "MERGED",
+ "mergedAt": "2026-11-06T12:00:00Z", "baseRefName": "main", "headRefName": "abc-100-frontend",
+ "body": "", "files": [{"path": "src/app.tsx", "additions": 20, "deletions": 3}], "author": {"login": "ana"}}

@@ -1,0 +1,3 @@
+{"key": "ABC-101", "fields": {"summary": "Subtask 101", "issuetype": {"name": "Sub-task"}, "status": {"name": "Done"},
+  "assignee": null, "parent": {"key": "ABC-100", "fields": {"summary": "Show what a rate includes", "issuetype": {"name": "Story"}}},
+  "description": null, "comment": {"comments": []}}}

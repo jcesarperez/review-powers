@@ -1,0 +1,38 @@
+[
+  {
+    "repository": {
+      "name": "hotel-api",
+      "nameWithOwner": "acme/hotel-api"
+    },
+    "number": 1,
+    "title": "ABC-101: add rates",
+    "state": "merged"
+  },
+  {
+    "repository": {
+      "name": "hotel-api",
+      "nameWithOwner": "acme/hotel-api"
+    },
+    "number": 2,
+    "title": "Clean up helpers",
+    "state": "merged"
+  },
+  {
+    "repository": {
+      "name": "web",
+      "nameWithOwner": "acme/web"
+    },
+    "number": 6,
+    "title": "ABC-100 frontend",
+    "state": "merged"
+  },
+  {
+    "repository": {
+      "name": "thing",
+      "nameWithOwner": "random/thing"
+    },
+    "number": 101,
+    "title": "Unrelated",
+    "state": "merged"
+  }
+]

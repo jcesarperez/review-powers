@@ -1,0 +1,21 @@
+{"key": "ABC-100", "fields": {
+  "summary": "Show what a rate includes",
+  "issuetype": {"name": "Story"}, "status": {"name": "Done"}, "assignee": {"displayName": "Ana"},
+  "issuelinks": [{"type": {"outward": "relates to", "inward": "is related to"},
+                  "outwardIssue": {"key": "ABC-90", "fields": {"summary": "Rates overview"}}}],
+  "subtasks": [{"key": "ABC-101", "fields": {"status": {"name": "Done"}}},
+               {"key": "ABC-102", "fields": {"status": {"name": "Done"}}}],
+  "description": {"type": "doc", "version": 1, "content": [
+    {"type": "heading", "attrs": {"level": 2}, "content": [{"type": "text", "text": "Acceptance criteria"}]},
+    {"type": "bulletList", "content": [
+      {"type": "listItem", "content": [
+        {"type": "paragraph", "content": [{"type": "text", "text": "The panel lists inclusions"}]},
+        {"type": "bulletList", "content": [{"type": "listItem", "content": [
+          {"type": "paragraph", "content": [{"type": "text", "text": "with their price"}]}]}]}]},
+      {"type": "listItem", "content": [{"type": "paragraph", "content": [
+        {"type": "text", "text": "Asked by "}, {"type": "mention", "attrs": {"text": "@Bo"}},
+        {"type": "text", "text": " in "}, {"type": "inlineCard", "attrs": {"url": "https://example.com/doc"}}]}]}]},
+    {"type": "codeBlock", "content": [{"type": "text", "text": "GET /rates/{id}"}]},
+    {"type": "taskList", "content": [{"type": "taskItem", "attrs": {"state": "DONE"}, "content": [{"type": "text", "text": "Design signed off"}]}]}]},
+  "comment": {"comments": [{"author": {"displayName": "Bo"}, "created": "2026-11-01T10:00:00.000+0000",
+    "body": {"type": "doc", "version": 1, "content": [{"type": "paragraph", "content": [{"type": "text", "text": "Split into backend and frontend."}]}]}}]}}}

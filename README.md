@@ -6,7 +6,7 @@ The bottleneck has moved from writing code to reviewing it. If AI writes code be
 
 So a while ago I stopped reviewing code and started reviewing the reviews the AI does. That's where I decide what changes and what doesn't. On my teammates' PRs, and on the feedback they leave on mine.
 
-These are the two skills I use every day to do that.
+These are the skills I use every day to do that, plus one for when a whole ticket has shipped.
 
 ## The skills
 
@@ -14,8 +14,9 @@ These are the two skills I use every day to do that.
 |---|---|---|
 | `review-pr` | You have to review someone's PR | What could break at deploy, real bugs, design calls you should check yourself, tests, simplicity. Then a numbered list of findings with a recommendation for each. |
 | `review-pr-feedback` | You got review comments on your PR | A verdict per comment: is it right, and is it worth doing? Then it fixes what you pick and replies to every comment. |
+| `review-ticket` | A Jira ticket is done: all its subtasks merged, maybe across repos | What no single PR review could see: contracts that drifted between repos, ACs nobody covered, leftovers, what's still owed at deploy. Then it files the improvements you pick as one follow-up Task. |
 
-Both stop and wait for you. Nothing gets commented, committed or pushed until you decide.
+All three stop and wait for you. Nothing gets commented, committed, pushed or filed until you decide.
 
 They don't teach your agent how to code. Your code and architecture conventions belong in your own setup (`CLAUDE.md`, `AGENTS.md`...). These skills only decide what lands on your desk and how.
 
@@ -45,15 +46,18 @@ Copy the folders in `skills/` into `.claude/skills/` (project) or `~/.claude/ski
 ```
 /review-pr https://github.com/acme/shop/pull/1234
 /review-pr-feedback https://github.com/acme/shop/pull/1234
+/review-ticket ABC-123
 ```
 
-With the plugin they are `/review-powers:review-pr` and `/review-powers:review-pr-feedback`.
+With the plugin they are `/review-powers:review-pr`, `/review-powers:review-pr-feedback` and `/review-powers:review-ticket`.
 
 They only run when you call them. The agent never loads them on its own, so they cost no context until you need them. This is set with `disable-model-invocation: true`, which is confirmed in Claude Code. Other agents may ignore it.
 
 ## Requirements
 
 - [GitHub CLI](https://cli.github.com) (`gh`), logged in. The skills read PRs, diffs, CI and comments through it.
+- [`jq`](https://jqlang.github.io/jq).
+- For `review-ticket`: [Atlassian CLI](https://developer.atlassian.com/cloud/acli) (`acli`), logged in to your Jira site, and `git`. It reads each repo's code and its own `CLAUDE.md`, `AGENTS.md` and rules from a worktree of your local clone, or a fresh clone when you have none.
 
 ## What a report looks like
 
@@ -99,10 +103,6 @@ Every finding leads with a concrete case, so you can judge it without opening th
 > - **Counterpoint:** the reviewer's fix (ask the API which row each discount belongs to) is the right one, but it needs a backend change.
 > - **Cost:** refetching on removal is about 20 lines and one test. The backend fix is a separate ticket.
 > - **Recommendation:** refetch in this PR, open a ticket for the backend.
-
-## Coming next
-
-`review-ticket`.
 
 ## License
 

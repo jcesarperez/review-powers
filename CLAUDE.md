@@ -6,15 +6,17 @@ Skills that turn AI code reviews into decision reports: the user reviews the rev
 
 - **`review-pr`:** reviews someone's PR → numbered findings, each with a recommendation.
 - **`review-pr-feedback`:** verdict per review comment on your PR → fixes what the user picks, replies to every comment.
+- **`review-ticket`:** a finished Jira ticket as one change, across its subtasks, PRs and repos → findings, what's owed, design calls; files the chosen ones as one follow-up Task.
 
 ## Editing skills
 
-- **Gate:** stopping for the user's decision is the point of both skills; every change keeps it.
+- **Gate:** stopping for the user's decision is the point of every skill; every change keeps it.
 - **Judgement over rules:** a skill is prose that shapes judgement. Prefer a principle with its reason to a new rule.
-- **Evidence:** change a skill in response to an observed failure, and say how you'd check it: the eval cases it touches, or a real PR to try it on.
+- **Evidence:** change a skill in response to an observed failure, and say how you'd check it: the eval cases it touches, or a real PR (or ticket) to try it on.
 - **Repeated corrections:** when the user corrects the same behaviour twice, it becomes an eval case, written even if not run.
-- **Shared parts:** each folder installs on its own, so some things are identical in both skills; edit both. "Explain it to someone who doesn't know the code" and the order-and-tag paragraph of the gate in `SKILL.md`, and `scripts/lib/feeds.sh`, the feed-fetching code that `fetch-pr.sh` and `feeds.sh` source. Check the script with `cmp skills/review-pr/scripts/lib/feeds.sh skills/review-pr-feedback/scripts/lib/feeds.sh`.
-- **Scripts:** mechanics (fetching, filtering, replying) live in `skills/<name>/scripts/`; `SKILL.md` says when to run them and keeps the judgement. Bash 3.2, `gh` and `jq` only.
+- **Shared parts:** each folder installs on its own, so some things are identical across skills; edit all of them. "Explain it to someone who doesn't know the code" up to "don't overwhelm the user" (all three); the order-and-tag paragraph of the gate (`review-pr` and `review-ticket` word for word; `review-pr-feedback` adds "not in the reviewer's order"); and `scripts/lib/feeds.sh`, the feed-fetching code that `fetch-pr.sh`, `feeds.sh` and `gather.sh` source. Check the script with `for s in review-pr-feedback review-ticket; do cmp skills/review-pr/scripts/lib/feeds.sh skills/$s/scripts/lib/feeds.sh; done`.
+- **Scripts:** mechanics (fetching, filtering, replying) live in `skills/<name>/scripts/`; `SKILL.md` says when to run them and keeps the judgement. Bash 3.2, `gh` and `jq` only, plus `git` and `acli` for `review-ticket`.
+- **Tests:** `review-ticket`'s scripts have deterministic tests: `tests/review-ticket/run.sh` (free, seconds, no network). Run them after changing `gather.sh`, `md2adf.sh` or `lib/feeds.sh`. `--update` rewrites the goldens in `expected/`; read that diff before committing, since the goldens are the spec. A new `gh` or `acli` call needs a fixture in `tests/review-ticket/fixtures/`, or the fake fails loudly.
 
 ## Workflow
 
@@ -24,10 +26,11 @@ Skills that turn AI code reviews into decision reports: the user reviews the rev
 
 ```text
 skills/<name>/SKILL.md      the skills
-skills/<name>/scripts/      what the skills run: fetch-pr.sh; feeds.sh, reply.sh; lib/feeds.sh in both
+skills/<name>/scripts/      what the skills run: fetch-pr.sh; feeds.sh, reply.sh; gather.sh, md2adf.sh; lib/feeds.sh in all three
 .claude-plugin/             plugin + marketplace manifests (version lives in plugin.json)
 evals/<skill>/<case>/       eval cases: prompt.md, case.yaml, graders/, scaffold.sh (+ history.jsonl for a second turn)
 evals/_fixtures/            fake hotel-api repo, its PRs, and a fake `gh`
+tests/review-ticket/        run.sh, fake gh + acli (bin/), fixtures/, goldens (expected/)
 CHANGELOG.md                Keep a Changelog, semver
 ```
 

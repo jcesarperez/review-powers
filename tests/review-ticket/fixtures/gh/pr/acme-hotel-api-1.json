@@ -1,0 +1,3 @@
+{"number": 1, "title": "ABC-101: add rates", "url": "https://github.com/acme/hotel-api/pull/1", "state": "MERGED",
+ "mergedAt": "2026-11-01T12:00:00Z", "baseRefName": "main", "headRefName": "abc-101-rates",
+ "body": "Adds rates.<!-- bot metadata -->", "files": [{"path": "src/rates/rate.ts", "additions": 10, "deletions": 0}, {"path": "src/rates/price.ts", "additions": 4, "deletions": 1}], "author": {"login": "ana"}}

@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Fake acli for review-ticket's tests: `jira workitem view <KEY> ... --json`
+# prints $FAKE_GH_FIXTURES/jira/<KEY>.json. Anything else fails loudly.
+
+set -u
+F="${FAKE_GH_FIXTURES:?FAKE_GH_FIXTURES not set}/jira"
+printf 'acli %s\n' "$*" >>"${FAKE_GH_LOG:-/dev/null}"
+
+if [ "${1:-} ${2:-} ${3:-}" = "jira workitem view" ]; then
+  [ -f "$F/${4:-}.json" ] || { echo "✗ Error: work item ${4:-} not found" >&2; exit 1; }
+  cat "$F/$4.json"
+  exit 0
+fi
+echo "fake acli: unsupported call: $*" >&2
+exit 2

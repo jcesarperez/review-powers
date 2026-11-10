@@ -1,0 +1,3 @@
+{"number": 9, "title": "ABC-100 port", "url": "https://github.com/other/fork/pull/9", "state": "MERGED",
+ "mergedAt": "2026-11-09T12:00:00Z", "baseRefName": "main", "headRefName": "abc-100-port",
+ "body": "", "files": [{"path": "README.md", "additions": 1, "deletions": 0}], "author": {"login": "ana"}}

@@ -2,7 +2,17 @@
 
 ## [Unreleased]
 
+### Added
+
+- `review-ticket`: reviews a finished Jira ticket as one change, across all its subtasks, PRs and repos, and files the improvements you pick as one follow-up Task. Needs `gh`, `jq`, `git` and `acli`.
+- `review-ticket` runs `gather.sh` first: the ticket and its subtasks, every PR whose title or branch names one of their keys (searched as an exact phrase; mentions from unrelated owners dropped and counted), each PR's comment feeds, and per repo the code at its default branch in a detached worktree of your clone, or a fresh clone when you have none. `--cleanup` removes the trees.
+- `review-ticket` reads each repo with its own AI context, wherever you run it from: per repo, `gather.sh` lists the `CLAUDE.md` and `AGENTS.md` at the root and above every touched file, the `.claude/rules` whose `paths:` match a touched file, and what they import with `@`, each with why it applies.
+- `review-ticket` files the Task through `md2adf.sh`, which turns the Markdown draft into Atlassian Document Format so checkboxes stay checkboxes.
+- Deterministic tests for `review-ticket`'s scripts: `tests/review-ticket/run.sh`, with a fake `gh` and `acli`, local git repos and golden outputs.
+
 ### Changed
+
+- `review-pr`, `review-pr-feedback` and `review-ticket` add Nit to their finding tags.
 
 - `review-pr` and `review-pr-feedback` order findings by what ignoring each would cost, worst first (`review-pr-feedback` no longer follows the reviewer's order), and tag each with what it is about: Bug, Product, Tests, Design, Docs, Security, Deploy, Conventions, Localization, Scope, or a better word when none fits.
 

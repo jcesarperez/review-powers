@@ -1,0 +1,5 @@
+---
+paths:
+  - "web/**"
+---
+Web rules.

@@ -9,5 +9,5 @@
   "homepage": "https://github.com/jcesarperez/review-powers",
   "repository": "https://github.com/jcesarperez/review-powers",
   "license": "MIT",
-  "keywords": ["code-review", "pull-request", "skills", "github"]
+  "keywords": ["code-review", "pull-request", "skills", "github", "jira"]
 }

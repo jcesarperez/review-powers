@@ -1,0 +1,7 @@
+read	CLAUDE.md	root
+read	AGENTS.md	root
+read	.claude/rules/general.md	rule without paths: applies to every file
+read	.claude/rules/web.md	rule paths: web/** matches web/index.ts
+read	docs/conventions.md	imported by AGENTS.md
+skip	.claude/rules/api.md	rule paths: src/rates/**/*.{ts,tsx} match no touched file
+skip	.claude/rules/inline.md	rule paths: src/util/*.ts lib/** match no touched file
