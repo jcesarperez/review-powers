@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Manifests are valid JSON
+        run: |
+          jq empty .claude-plugin/plugin.json .claude-plugin/marketplace.json
+      - name: Every skill has a SKILL.md named after its folder
+        run: |
+          for d in skills/*/; do
+            n=$(basename "$d")
+            grep -q "^name: $n$" "$d/SKILL.md" || { echo "::error::$d/SKILL.md: name does not match folder"; exit 1; }
+          done
+      - name: Shared feeds.sh is identical in all three skills
+        run: |
+          for s in review-pr-feedback review-ticket; do
+            cmp skills/review-pr/scripts/lib/feeds.sh skills/$s/scripts/lib/feeds.sh
+          done
+      - name: review-ticket script tests
+        run: tests/review-ticket/run.sh
+
+  # On main, a release must be complete: the version, the changelog and the tag agree.
+  release-consistency:
+    if: github.ref == 'refs/heads/main'
+    needs: checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Version, changelog and tag agree
+        run: |
+          v=$(jq -r .version .claude-plugin/plugin.json)
+          git fetch --tags --force
+          git tag --points-at HEAD | grep -qx "v$v" \
+            || { echo "::error::HEAD of main is not tagged v$v (plugin.json version)"; exit 1; }
+          grep -q "^## \[$v\] - " CHANGELOG.md \
+            || { echo "::error::CHANGELOG.md has no '## [$v] - <date>' entry"; exit 1; }
+          if awk '/^## \[Unreleased\]/{f=1;next} /^## \[/{f=0} f&&NF' CHANGELOG.md | grep -q .; then
+            echo "::error::CHANGELOG.md still has Unreleased entries on main"; exit 1
+          fi

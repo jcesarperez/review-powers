@@ -4,6 +4,7 @@
 
 ### Added
 
+- Release flow: `main` holds only the latest release and `develop` the work in progress; `scripts/release.sh` publishes, and CI checks every push.
 - `review-ticket`: reviews a finished Jira ticket as one change, across all its subtasks, PRs and repos, and files the improvements you pick as one follow-up Task. Needs `gh`, `jq`, `git` and `acli`.
 - `review-ticket` runs `gather.sh` first: the ticket and its subtasks, every PR whose title or branch names one of their keys (searched as an exact phrase; mentions from unrelated owners dropped and counted), each PR's comment feeds, and per repo the code at its default branch in a detached worktree of your clone, or a fresh clone when you have none. `--cleanup` removes the trees.
 - `review-ticket` reads each repo with its own AI context, wherever you run it from: per repo, `gather.sh` lists the `CLAUDE.md` and `AGENTS.md` at the root and above every touched file, the `.claude/rules` whose `paths:` match a touched file, and what they import with `@`, each with why it applies.

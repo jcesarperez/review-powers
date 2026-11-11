@@ -37,6 +37,14 @@ It works with Claude Code, Codex, Cursor, Copilot, Gemini CLI and other agents t
 /plugin install review-powers@review-powers
 ```
 
+### Latest development version
+
+`main` is always the latest release. To try what is coming next:
+
+```bash
+npx skills add jcesarperez/review-powers#develop
+```
+
 ### Manual
 
 Copy the folders in `skills/` into `.claude/skills/` (project) or `~/.claude/skills/` (global), or into your agent's skills folder.
