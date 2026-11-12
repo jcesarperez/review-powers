@@ -44,9 +44,7 @@ conclusion=$(gh run list --workflow ci.yml --commit "$sha" --json conclusion,sta
 echo "== tests on a clean export of develop"
 tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
 git archive "$sha" | tar -x -C "$tmp"
-for s in review-pr-feedback review-ticket; do
-  cmp "$tmp/skills/review-pr/scripts/lib/feeds.sh" "$tmp/skills/$s/scripts/lib/feeds.sh"
-done
+cmp "$tmp/skills/review-pr/scripts/lib/feeds.sh" "$tmp/skills/review-pr-feedback/scripts/lib/feeds.sh"
 (cd "$tmp" && tests/review-ticket/run.sh >/dev/null) || fail "review-ticket tests fail"
 
 echo "== will release $tag"

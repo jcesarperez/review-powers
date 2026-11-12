@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deterministic tests for review-ticket's scripts (gather.sh, md2adf.sh): fake
+# Deterministic tests for review-ticket's scripts (gather.py, md2adf.sh): fake
 # gh and acli, local git repos standing in for GitHub, golden outputs. No
 # network, no model.
 #
@@ -69,16 +69,28 @@ echo "work in progress" >"$CLONE/wip.txt"
 
 # --- AI context resolution, directly ------------------------------------------
 printf '%s\n' src/rates/rate.ts src/rates/price.ts src/util/x.ts >"$T/touched.txt"
-"$S/gather.sh" context "$CLONE" "$T/touched.txt" >"$T/context.tsv"
+"$S/gather.py" context "$CLONE" "$T/touched.txt" >"$T/context.tsv"
 golden context-hotel-api.tsv "$T/context.tsv"
 
 printf '%s\n' web/index.ts >"$T/touched-web.txt"
-"$S/gather.sh" context "$CLONE" "$T/touched-web.txt" >"$T/context-web.tsv"
+"$S/gather.py" context "$CLONE" "$T/touched-web.txt" >"$T/context-web.tsv"
 golden context-other-files.tsv "$T/context-web.tsv"
+
+# Rule globs as Claude Code documents them: (pattern, path, 1 match | 0 no match).
+cat >"$T/globs.py" <<'PY'
+import sys; sys.path.insert(0, sys.argv[1]); import gather
+cases = [("*.md", "README.md", 1), ("*.md", "docs/sub/x.md", 1), ("/*.md", "README.md", 1), ("/*.md", "docs/x.md", 0),
+         ("src/components/*.tsx", "src/components/A.tsx", 1), ("src/components/*.tsx", "src/components/x/A.tsx", 0),
+         ("**/*.ts", "a.ts", 1), ("**/*.ts", "a/b/c.ts", 1), ("src/", "src/a/b", 1), ("src/**/*.{ts,tsx}", "src/a.tsx", 1),
+         ("file[0-9].ts", "file3.ts", 1), ("file[!0-9].ts", "file3.ts", 0), ("photos [2024/**", "photos [2024/a", 0)]
+bad = [c for c in cases if gather.glob_match(c[1], c[0]) != bool(c[2])]
+sys.exit("wrong: %s" % bad if bad else 0)
+PY
+assert "rule globs match as documented" python3 -I "$T/globs.py" "$S"
 
 # --- full gather, owner inferred ----------------------------------------------
 OUT="$T/out"
-(cd "$T" && "$S/gather.sh" --repos-dir "$T/workspace" ABC-100 "$OUT") >"$T/index.txt" 2>"$T/stderr" ||
+(cd "$T" && "$S/gather.py" --repos-dir "$T/workspace" ABC-100 "$OUT") >"$T/index.txt" 2>"$T/stderr" ||
   ko "gather exits 0" "$(cat "$T/stderr")"
 golden index.txt "$T/index.txt"
 golden jira-ABC-100.md "$OUT/jira/ABC-100.md"
@@ -97,26 +109,38 @@ assert "PRs are searched without an owner when none is given" \
   sh -c "! grep -q -- '--owner' '$T/gh.log'"
 
 # --- cleanup ----------------------------------------------------------------------
-"$S/gather.sh" --cleanup "$OUT" >/dev/null
+"$S/gather.py" --cleanup "$OUT" >/dev/null
 assert "cleanup removes every code tree" sh -c "! ls -d '$OUT'/repos/*/tree 2>/dev/null"
 assert "cleanup unregisters the worktree" test "$(git -C "$CLONE" worktree list | wc -l | tr -d ' ')" = 1
 assert "cleanup keeps the gathered files" test -f "$OUT/repos/acme-hotel-api/context.md"
-assert "cleanup is safe to repeat" "$S/gather.sh" --cleanup "$OUT"
+assert "cleanup is safe to repeat" "$S/gather.py" --cleanup "$OUT"
 
 # --- owner given, ticket as a URL ---------------------------------------------
 : >"$T/gh.log"
-(cd "$T" && "$S/gather.sh" --owner acme --repos-dir "$T/workspace" \
+(cd "$T" && "$S/gather.py" --owner acme --repos-dir "$T/workspace" \
   "https://jira-1.example.com/browse/abc-100?focusedCommentId=1" "$T/out2") >"$T/index2.txt" 2>"$T/stderr" ||
   ko "gather --owner exits 0" "$(cat "$T/stderr")"
 assert "the key comes from the URL path, not the host" grep -q '^Ticket ABC-100:' "$T/index2.txt"
 assert "--owner reaches every search" test "$(grep -c '^search prs .* --owner acme' "$T/gh.log")" = 3
 assert "--owner leaves other owners' PRs out" sh -c "! grep -q 'other/fork' '$T/index2.txt'"
-"$S/gather.sh" --cleanup "$T/out2" >/dev/null
+"$S/gather.py" --cleanup "$T/out2" >/dev/null
+
+# --- a killed run -------------------------------------------------------------
+# acme/web hangs and the run is killed meanwhile. index.md must already hold
+# everything gathered, with acme/web marked PENDING, not missing.
+(cd "$T" && FAKE_GH_HANG=acme/web exec "$S/gather.py" --repos-dir "$T/workspace" ABC-100 "$T/out4") >/dev/null 2>&1 &
+pid=$!
+for _ in $(seq 1 100); do grep -q 'acme/hotel-api  main @' "$T/out4/index.md" 2>/dev/null && break; sleep 0.1; done
+kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null || true
+assert "a killed run leaves its index, with the unfinished repo PENDING" \
+  sh -c "grep -q 'acme/web: PENDING' '$T/out4/index.md' && grep -q 'acme/hotel-api  main @' '$T/out4/index.md' && grep -q 'still gathering' '$T/out4/index.md'"
+assert "a finished run's index has nothing pending" sh -c "! grep -qE 'PENDING|still gathering' '$T/index.txt'"
+"$S/gather.py" --cleanup "$T/out4" >/dev/null
 
 # --- failures -------------------------------------------------------------------
-assert "no key in the argument is an error" sh -c "! '$S/gather.sh' 'no key here' '$T/out3' 2>/dev/null"
+assert "no key in the argument is an error" sh -c "! '$S/gather.py' 'no key here' '$T/out3' 2>/dev/null"
 assert "an unreadable ticket stops the gather" \
-  sh -c "! '$S/gather.sh' ABC-999 '$T/out3' 2>'$T/err3' && grep -q 'cannot read the ticket ABC-999' '$T/err3'"
+  sh -c "! '$S/gather.py' ABC-999 '$T/out3' 2>'$T/err3' && grep -q 'cannot read the ticket ABC-999' '$T/err3'"
 
 # --- md2adf -----------------------------------------------------------------------
 "$S/md2adf.sh" "$HERE/fixtures/task.md" | jq . >"$T/task.json"

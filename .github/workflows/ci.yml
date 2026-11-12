@@ -22,11 +22,8 @@ jobs:
             n=$(basename "$d")
             grep -q "^name: $n$" "$d/SKILL.md" || { echo "::error::$d/SKILL.md: name does not match folder"; exit 1; }
           done
-      - name: Shared feeds.sh is identical in all three skills
-        run: |
-          for s in review-pr-feedback review-ticket; do
-            cmp skills/review-pr/scripts/lib/feeds.sh skills/$s/scripts/lib/feeds.sh
-          done
+      - name: Shared feeds.sh is identical in review-pr and review-pr-feedback
+        run: cmp skills/review-pr/scripts/lib/feeds.sh skills/review-pr-feedback/scripts/lib/feeds.sh
       - name: review-ticket script tests
         run: tests/review-ticket/run.sh
 

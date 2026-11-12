@@ -8,7 +8,7 @@ Jira:
 PRs (key in title or branch):
   ABC-102: search FAILED (HTTP 500: Server Error (https://api.github.com/search/issues)) — not checked
   ABC-101  acme/hotel-api#1 [MERGED] ABC-101: add rates
-      <tmp>/out/prs/hotel-api-1  (review threads: 1 (0 open), conversation: 0, review bodies: 1)
+      <tmp>/out/prs/hotel-api-1  (review threads: 1 (0 open), conversation: 4, review bodies: 1, bot notices collapsed: 2)
   ABC-101  acme/hotel-api#2 [MERGED] Clean up helpers
       <tmp>/out/prs/hotel-api-2  (review threads: 0 (0 open), conversation: 0, review bodies: 0)
   ABC-100  acme/web#6 [MERGED] ABC-100 frontend
@@ -26,7 +26,7 @@ PRs per owner: acme: 3, other: 1. Rerun with --owner if some don't belong.
 Repos (code at the default branch; read each one's context before its code):
   acme/hotel-api  main @ <sha>  (worktree of <tmp>/workspace/hotel-api)
       code:    <tmp>/out/repos/acme-hotel-api/tree
-      context: <tmp>/out/repos/acme-hotel-api/context.md (7 to read, 1 not applicable)
+      context: <tmp>/out/repos/acme-hotel-api/context.md (9 to read, 2 not applicable)
   acme/web  main @ <sha>  (fresh shallow clone)
       code:    <tmp>/out/repos/acme-web/tree
       context: <tmp>/out/repos/acme-web/context.md (0 to read, 0 not applicable)
@@ -36,4 +36,4 @@ Failed (gather these by hand):
   gh search prs ABC-102: HTTP 500: Server Error (https://api.github.com/search/issues)
   gh repo view other/fork: GraphQL: Could not resolve to a Repository with the name 'other/fork'. (repository)
 
-Remove the code trees when done: <scripts>/gather.sh --cleanup <tmp>/out
+Remove the code trees when done: <scripts>/gather.py --cleanup <tmp>/out

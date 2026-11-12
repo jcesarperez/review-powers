@@ -1,0 +1,10 @@
+[
+  {"id": 31, "user": {"login": "github-actions[bot]", "type": "Bot"}, "created_at": "2026-01-02T00:00:00Z", "html_url": "https://github.com/acme/hotel-api/pull/1#issuecomment-31",
+   "body": "# Summary\n<details open><summary>Summary</summary>\n\n|||\n|:---|:---|\n| Generated on: | 01/02/2026 |\n| Coverage date: | 01/02/2026 |\n| Line coverage: | 81% |\n</details>"},
+  {"id": 32, "user": {"login": "moxly[bot]", "type": "Bot"}, "created_at": "2026-01-02T00:01:00Z", "html_url": "https://github.com/acme/hotel-api/pull/1#issuecomment-32",
+   "body": "A re-review of this pull request has started. The results will be posted on the PR when it finishes."},
+  {"id": 33, "user": {"login": "moxly[bot]", "type": "Bot"}, "created_at": "2026-01-02T00:05:00Z", "html_url": "https://github.com/acme/hotel-api/pull/1#issuecomment-33",
+   "body": "Review finished: 1 finding. The rate cache has no expiry."},
+  {"id": 34, "user": {"login": "al", "type": "User"}, "created_at": "2026-01-02T00:06:00Z", "html_url": "https://github.com/acme/hotel-api/pull/1#issuecomment-34",
+   "body": "Line coverage dropped; a review of this PR has started on my side too."}
+]

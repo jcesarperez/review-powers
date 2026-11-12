@@ -65,7 +65,7 @@ They only run when you call them. The agent never loads them on its own, so they
 
 - [GitHub CLI](https://cli.github.com) (`gh`), logged in. The skills read PRs, diffs, CI and comments through it.
 - [`jq`](https://jqlang.github.io/jq).
-- For `review-ticket`: [Atlassian CLI](https://developer.atlassian.com/cloud/acli) (`acli`), logged in to your Jira site, and `git`. It reads each repo's code and its own `CLAUDE.md`, `AGENTS.md` and rules from a worktree of your local clone, or a fresh clone when you have none.
+- For `review-ticket`: [Atlassian CLI](https://developer.atlassian.com/cloud/acli) (`acli`), logged in to your Jira site, `git` and Python 3.8+ (standard library only). It reads each repo's code and its own `CLAUDE.md`, `AGENTS.md` and rules from a worktree of your local clone, or a fresh clone when you have none.
 
 ## What a report looks like
 

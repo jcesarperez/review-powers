@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Feed-fetching code shared by review-pr (fetch-pr.sh), review-pr-feedback
-# (feeds.sh) and review-ticket (gather.sh). Each skill folder installs on its
-# own, so this file exists in all three and must stay byte-identical: edit one,
-# copy to the others, check with
-#   for s in review-pr-feedback review-ticket; do cmp skills/review-pr/scripts/lib/feeds.sh skills/$s/scripts/lib/feeds.sh; done
+# Feed-fetching code shared by review-pr (fetch-pr.sh) and review-pr-feedback
+# (feeds.sh); review-ticket's gather.py has its own port. Each skill folder
+# installs on its own, so this file exists in both and must stay byte-identical:
+# edit one, copy to the other, check with
+#   cmp skills/review-pr/scripts/lib/feeds.sh skills/review-pr-feedback/scripts/lib/feeds.sh
 #
 # Sourced, not executed. The caller runs `set -euo pipefail` and sets SKILL_NAME
 # (names the default scratch dir). Use: need_tools, resolve_pr, scratch_dir,

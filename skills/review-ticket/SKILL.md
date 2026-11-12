@@ -21,10 +21,18 @@ follow-up worth its cost, not a blocker.
 
 The request names only the ticket; what you need is spread across Jira,
 GitHub and several repos. Run
-`${CLAUDE_SKILL_DIR}/scripts/gather.sh [--owner <owner>] [--repos-dir <dir>] <KEY> <scratchpad>/gather`.
+`${CLAUDE_SKILL_DIR}/scripts/gather.py [--owner <owner>] [--repos-dir <dir>] <KEY> <scratchpad>/gather`.
 It writes the ticket, every subtask, every PR whose title or branch names a
 key, each PR's comment feeds, and per repo the code at its default branch,
-then prints an index of what it found, missed and failed. Don't ask the user
+then prints an index of what it found, missed and failed.
+
+A ticket with many PRs takes minutes, mostly network. Run it in the
+background, without piping or trimming its output, and read
+`<scratchpad>/gather/index.md`, which fills step by step: a run held in the
+foreground shows nothing until it ends, and can hit the tool's time limit in
+silence while half the index is already readable. Until the run ends the
+index says it is still gathering; a repo marked PENDING when it has ended
+was not gathered, so treat it as FAILED. Don't ask the user
 for the options: pass `--owner` when the context already names the GitHub
 user or org (a CLAUDE.md, the repo you're in), and `--repos-dir` when it says
 where their clones live. Without `--owner` the script searches everything the
@@ -57,7 +65,7 @@ wins. A repo the index marks FAILED has unread code and context; say so.
 
 The code trees are detached worktrees of the user's clones (or fresh clones)
 in the scratchpad; never read the user's working tree. Remove them when the
-review ends with `gather.sh --cleanup <dir>`. Read the code yourself rather
+review ends with `gather.py --cleanup <dir>`. Read the code yourself rather
 than through subagents: they start cold and re-read what you already have,
 and so far that has doubled the cost without making a run faster or its
 findings sharper.

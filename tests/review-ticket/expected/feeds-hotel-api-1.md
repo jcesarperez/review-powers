@@ -6,8 +6,14 @@
 - id 11 · coderabbitai[bot]:
   Consider caching.
 
-## Conversation comments (0)
+## Conversation comments (4; 2 bot notices collapsed)
 
+- id 31 · github-actions[bot]: (collapsed: coverage report, 1 KB; full text in the .json)
+- id 32 · moxly[bot]: (collapsed: review-started notice, 1 KB; full text in the .json)
+- id 33 · moxly[bot]:
+  Review finished: 1 finding. The rate cache has no expiry.
+- id 34 · al:
+  Line coverage dropped; a review of this PR has started on my side too.
 
 ## Review bodies (1 reviews, 1 with a body)
 

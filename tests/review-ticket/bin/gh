@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Fake gh for review-ticket's tests: answers the calls gather.sh and feeds.sh
-# make from files under $FAKE_GH_FIXTURES/gh, and logs every call to
+# Fake gh for review-ticket's tests: answers the calls gather.py
+# makes from files under $FAKE_GH_FIXTURES/gh, and logs every call to
 # $FAKE_GH_LOG. Anything else fails loudly, so a new call needs a fixture.
 #
 #   search prs <KEY> [--owner O]   search/<KEY>.json (filtered by owner), or
@@ -10,7 +10,7 @@
 #   repo clone o/r <dir> -- ...    shallow clone of $FAKE_GH_REMOTES/<r>.git
 #   api [--paginate] <path>        api/<path>.json, [] when missing
 #   api graphql ... -f owner= -f name= -F number=   graphql/<o>-<r>-<N>.json
-# --jq / -q filters apply as in gh. Missing fixtures answer like GitHub does.
+# FAKE_GH_HANG=o/r makes `repo view o/r` hang. --jq / -q filters apply as in gh. Missing fixtures answer like GitHub does.
 
 set -u
 F="${FAKE_GH_FIXTURES:?FAKE_GH_FIXTURES not set}/gh"
@@ -31,12 +31,13 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-out() { if [ -n "$JQ" ]; then jq -r "$JQ" "$1"; else cat "$1"; fi; }
+# Like gh, --jq prints strings raw and objects compactly, one per line.
+out() { if [ -n "$JQ" ]; then jq -rc "$JQ" "$1"; else cat "$1"; fi; }
 slugfile() { printf '%s-%s' "${1%%/*}" "${1#*/}"; }
 
 case "${POS[0]:-} ${POS[1]:-}" in
   "search prs")
-    key="${POS[2]//\"/}"   # gather.sh searches the key as a quoted phrase
+    key="${POS[2]//\"/}"   # gather.py searches the key as a quoted phrase
     if [ -f "$F/search/$key.err" ]; then cat "$F/search/$key.err" >&2; exit 1; fi
     [ -f "$F/search/$key.json" ] || { echo '[]'; exit 0; }
     jq --arg o "$OWNER" 'map(select($o == "" or (.repository.nameWithOwner | startswith($o + "/"))))' "$F/search/$key.json" ;;
@@ -45,6 +46,8 @@ case "${POS[0]:-} ${POS[1]:-}" in
     [ -f "$f" ] || { echo "GraphQL: Could not resolve to a PullRequest with the number of ${POS[2]}. (repository.pullRequest)" >&2; exit 1; }
     out "$f" ;;
   "repo view")
+    # FAKE_GH_HANG=o/r stands for a repo whose setup never ends.
+    [ "${FAKE_GH_HANG:-}" != "${POS[2]}" ] || sleep 60
     f="$F/repo/$(slugfile "${POS[2]}").json"
     [ -f "$f" ] || { echo "GraphQL: Could not resolve to a Repository with the name '${POS[2]}'. (repository)" >&2; exit 1; }
     out "$f" ;;
@@ -60,7 +63,7 @@ case "${POS[0]:-} ${POS[1]:-}" in
     path="${POS[1]%%\?*}"
     f="$F/api/$path.json"
     if [ -f "$f" ]; then out "$f"
-    elif [ -n "$JQ" ]; then echo '[]' | jq -r "$JQ"
+    elif [ -n "$JQ" ]; then echo '[]' | jq -rc "$JQ"
     else echo '[]'; fi ;;
   *)
     echo "fake gh: unsupported call: $*" >&2; exit 2 ;;
