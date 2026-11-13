@@ -270,15 +270,30 @@ def imports_of(text):
     return out
 
 
+def scoped_glob(g):
+    """A glob that names a directory before its first wildcard (`src/rates/**`),
+    rather than only a file type (`*.ts`, `**/*.spec.*`)."""
+    return any("/" in re.split(r"[*?\[]", e.lstrip("/"), 1)[0] for e in expand_braces(g))
+
+
+def line_count(path):
+    try:
+        return len(path.read_text(errors="replace").splitlines())
+    except OSError:
+        return 0
+
+
 def resolve_context(tree, touched):
-    """Lines (read|skip, path, reason), paths relative to the tree."""
+    """Rows (always|broad|skip, path, lines, reason), paths relative to the tree.
+    always: the root files and the ones scoped to the touched code; broad: rules
+    for a file type or for every file; an import joins its importer's group."""
     t = Path(tree).resolve()
     touched = sorted(set(f for f in touched if f))
     acc, skips = [], []
 
     for name in ("CLAUDE.md", "AGENTS.md", ".claude/CLAUDE.md"):
         if (t / name).is_file():
-            acc.append(("read", name, "root"))
+            acc.append(("always", name, "root"))
 
     nested = Counter()
     for f in touched:
@@ -289,7 +304,7 @@ def resolve_context(tree, touched):
                     nested[(f"{d}/{name}", d)] += 1
             d = os.path.dirname(d)
     for (rel, d), n in sorted(nested.items()):
-        acc.append(("read", rel, f"covers {d}/ ({n} touched file{'s' if n > 1 else ''})"))
+        acc.append(("always", rel, f"covers {d}/ ({n} touched file{'s' if n > 1 else ''})"))
 
     rules = t / ".claude" / "rules"
     if rules.is_dir():
@@ -297,11 +312,12 @@ def resolve_context(tree, touched):
             rel = str(p.relative_to(t))
             globs = rule_paths(p.read_text(errors="replace"))
             if not globs:
-                acc.append(("read", rel, "rule without paths: applies to every file"))
+                acc.append(("broad", rel, "rule without paths: applies to every file"))
                 continue
-            hit = next((f"rule paths: {g} matches {f}" for g in globs for f in touched if glob_match(f, g)), None)
-            if hit:
-                acc.append(("read", rel, hit))
+            hits = [(g, f) for g in globs for f in touched if glob_match(f, g)]
+            if hits:
+                g, f = next(((g, f) for g, f in hits if scoped_glob(g)), hits[0])
+                acc.append(("always" if scoped_glob(g) else "broad", rel, f"rule paths: {g} matches {f}"))
             else:
                 skips.append(("skip", rel, f"rule paths: {' '.join(globs)} match no touched file"))
 
@@ -311,7 +327,7 @@ def resolve_context(tree, touched):
     # listed, marked as resolved from the root.
     i = 0
     while i < len(acc):
-        rel = acc[i][1]
+        group, rel = acc[i][0], acc[i][1]
         src = t / rel
         if src.is_file():
             for p in imports_of(src.read_text(errors="replace")):
@@ -328,9 +344,9 @@ def resolve_context(tree, touched):
                 except ValueError:
                     continue
                 if target not in {a[1] for a in acc}:
-                    acc.append(("read", target, why))
+                    acc.append((group, target, why))
         i += 1
-    return acc + skips
+    return [(k, rel, str(line_count(t / rel)), why) for k, rel, why in acc + skips]
 
 
 # --- Jira --------------------------------------------------------------------
@@ -640,18 +656,32 @@ def setup_repo(slug, out, touched, repos_dirs):
     progress(f"{slug}: resolving AI context")
     ctx = resolve_context(tree, files)
     (d / "context.tsv").write_text("".join("\t".join(r) + "\n" for r in ctx))
-    reads = [r for r in ctx if r[0] == "read"]
-    skips = [r for r in ctx if r[0] == "skip"]
+    always, broad, skips = ([r for r in ctx if r[0] == k] for k in ("always", "broad", "skip"))
+
+    def entries(rows):
+        return [f"- {p} ({n} line{'' if n == '1' else 's'}) — {why}" for _, p, n, why in rows]
+
+    def total(rows):
+        return sum(int(r[2]) for r in rows)
+
     L = [f"# AI context for {slug} ({branch} @ {sha})", "",
          f"Code: {tree} ({how}). Files the PRs touched: {len(files)} (touched.txt).", "",
-         "Read these before judging this repo's code. Paths are relative to the tree; "
-         "where two disagree, the one nearest the code wins.", ""]
-    L += [f"- {p} — {why}" for _, p, why in reads] or ["- (none: this repo has no CLAUDE.md, AGENTS.md or rules)"]
+         "Paths are relative to the tree; where two disagree, the one nearest the code wins.", ""]
+    if not always and not broad:
+        L += ["- (none: this repo has no CLAUDE.md, AGENTS.md or rules)"]
+    if always:
+        L += [f"Always read: the root files and the ones scoped to the touched code ({total(always)} lines):", ""]
+        L += entries(always)
+    if broad:
+        L += ([""] if always else []) + [
+            f"Broad: rules for a file type or for every file; read them when judging whether "
+            f"the code follows this repo's conventions ({total(broad)} lines):", ""]
+        L += entries(broad)
     if skips:
-        L += ["", "Not applicable to these changes:", ""] + [f"- {p} — {why}" for _, p, why in skips]
+        L += ["", "Not applicable to these changes:", ""] + entries(skips)
     (d / "context.md").write_text("\n".join(L) + "\n")
     return [f"  {slug}  {branch} @ {sha}  ({how})", f"      code:    {tree}",
-            f"      context: {d / 'context.md'} ({len(reads)} to read, {len(skips)} not applicable)"]
+            f"      context: {d / 'context.md'} ({len(always)} always, {len(broad)} broad, {len(skips)} not applicable)"]
 
 
 # --- main --------------------------------------------------------------------

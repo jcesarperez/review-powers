@@ -58,10 +58,14 @@ An unread feed and a clean one look identical in a report; say which you read.
 You are not running inside these repos, so their AI context (CLAUDE.md,
 AGENTS.md, rules) won't load on its own, and it's what separates a deviation
 from the convention. For each repo the index points at a `context.md`: the
-files that apply to what the PRs touched, each with why, and the rules that
-don't. Read them before judging that repo's code, and follow what they point
-to when it bears on the change. Where two disagree, the one nearest the code
-wins. A repo the index marks FAILED has unread code and context; say so.
+files that apply to what the PRs touched, each with why and its length, and
+the rules that don't. They come in two groups, because a long flat list tends
+to get read not at all. Always read the first, the root files and the ones
+scoped to the touched code, before judging that repo's code. Read the broad
+group, rules for a file type or for every file, when you judge whether the
+code follows the repo's conventions. Follow what they point to when it bears
+on the change. Where two disagree, the one nearest the code wins. A repo the
+index marks FAILED has unread code and context; say so.
 
 The code trees are detached worktrees of the user's clones (or fresh clones)
 in the scratchpad; never read the user's working tree. Remove them when the
