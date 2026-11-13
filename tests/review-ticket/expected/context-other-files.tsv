@@ -1,10 +1,9 @@
 always	CLAUDE.md	9	root
 always	AGENTS.md	1	root
 broad	.claude/rules/general.md	1	rule without paths: applies to every file
-broad	.claude/rules/stub.md	5	rule paths: *.ts matches web/index.ts
+broad	.agents/rules/stub.md	1	via .claude/rules/stub.md (resolved from the repo root), rule paths: *.ts matches web/index.ts
 always	.claude/rules/web.md	5	rule paths: web/** matches web/index.ts
 always	docs/conventions.md	1	imported by AGENTS.md
-broad	.agents/rules/stub.md	1	imported by .claude/rules/stub.md (resolved from the repo root)
-skip	.claude/rules/api.md	6	rule paths: src/rates/**/*.{ts,tsx} match no touched file
+skip	.claude/rules/api.md	7	rule paths: src/rates/**/*.{ts,tsx} match no touched file
 skip	.claude/rules/inline.md	4	rule paths: src/util/*.ts lib/** match no touched file
 skip	.claude/rules/root-only.md	5	rule paths: /*.ts match no touched file

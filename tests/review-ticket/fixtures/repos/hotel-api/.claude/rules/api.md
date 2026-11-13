@@ -4,3 +4,4 @@ paths:
   - "src/rates/**/*.{ts,tsx}"
 ---
 API rules.
+@../../docs/rates.md

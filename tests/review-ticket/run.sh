@@ -68,7 +68,7 @@ git -C "$CLONE" checkout -q -b my-work
 echo "work in progress" >"$CLONE/wip.txt"
 
 # --- AI context resolution, directly ------------------------------------------
-printf '%s\n' src/rates/rate.ts src/rates/price.ts src/util/x.ts >"$T/touched.txt"
+printf '%s\n' src/rates/rate.ts src/rates/price.ts src/util/x.ts src/util/gen.ts src/generated/client.ts >"$T/touched.txt"
 "$S/gather.py" context "$CLONE" "$T/touched.txt" >"$T/context.tsv"
 golden context-hotel-api.tsv "$T/context.tsv"
 

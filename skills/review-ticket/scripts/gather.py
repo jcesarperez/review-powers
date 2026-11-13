@@ -276,6 +276,52 @@ def scoped_glob(g):
     return any("/" in re.split(r"[*?\[]", e.lstrip("/"), 1)[0] for e in expand_braces(g))
 
 
+# Same patterns as review-pr's fetch-pr.sh, which leaves these out of the diff.
+GENERATED_NAMES = re.compile(
+    r"(package-lock\.json|npm-shrinkwrap\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb?|go\.sum|packages\.lock\.json"
+    r"|gradle\.lockfile|.*\.lock|.*\.min\.(js|css)|.*\.map"
+    r"|(.*[.-])?(openapi|swagger)\.(json|ya?ml)"
+    r"|.*\.pb\.(go|cc|h)|.*_pb2(_grpc)?\.py|.*_generated\.go|.*\.generated\..*|.*\.g\.(cs|dart)|.*\.[Dd]esigner\.cs)\Z")
+GENERATED_DIRS = re.compile(r"(?:^|.*/)(generated|__generated__|node_modules|vendor)/")
+
+
+def generated_attrs(tree):
+    """Patterns the root .gitattributes marks linguist-generated."""
+    try:
+        text = (Path(tree) / ".gitattributes").read_text(errors="replace")
+    except OSError:
+        return []
+    out = []
+    for line in text.splitlines():
+        f = line.split()
+        if len(f) < 2 or f[0].startswith("#"):
+            continue
+        gen = False
+        for a in f[1:]:
+            if a in ("linguist-generated", "linguist-generated=true"):
+                gen = True
+            elif a in ("-linguist-generated", "linguist-generated=false"):
+                gen = False
+        if gen:
+            out.append(f[0])
+    return out
+
+
+def is_generated(path, attrs):
+    return (any(glob_match(path, a) for a in attrs)
+            or bool(GENERATED_NAMES.match(os.path.basename(path))) or bool(GENERATED_DIRS.match(path)))
+
+
+def stub_import(text):
+    """The one @import of a rule whose body is nothing else, or None."""
+    lines = text.splitlines()
+    if lines and lines[0].strip() == "---":
+        end = next((i for i, l in enumerate(lines[1:], 1) if l.strip() == "---"), len(lines))
+        lines = lines[end + 1:]
+    body = [l.strip() for l in lines if l.strip()]
+    return body[0][1:] if len(body) == 1 and re.fullmatch(r"@\S+", body[0]) else None
+
+
 def line_count(path):
     try:
         return len(path.read_text(errors="replace").splitlines())
@@ -289,6 +335,7 @@ def resolve_context(tree, touched):
     for a file type or for every file; an import joins its importer's group."""
     t = Path(tree).resolve()
     touched = sorted(set(f for f in touched if f))
+    attrs = generated_attrs(t)
     acc, skips = [], []
 
     for name in ("CLAUDE.md", "AGENTS.md", ".claude/CLAUDE.md"):
@@ -316,7 +363,8 @@ def resolve_context(tree, touched):
                 continue
             hits = [(g, f) for g in globs for f in touched if glob_match(f, g)]
             if hits:
-                g, f = next(((g, f) for g, f in hits if scoped_glob(g)), hits[0])
+                # A scoped glob first, then a hand-written file: it shows why the rule applies.
+                g, f = min(hits, key=lambda h: (not scoped_glob(h[0]), is_generated(h[1], attrs)))
                 acc.append(("always" if scoped_glob(g) else "broad", rel, f"rule paths: {g} matches {f}"))
             else:
                 skips.append(("skip", rel, f"rule paths: {' '.join(globs)} match no touched file"))
@@ -346,6 +394,18 @@ def resolve_context(tree, touched):
                 if target not in {a[1] for a in acc}:
                     acc.append((group, target, why))
         i += 1
+    # A rule that only imports one file is listed as that file, with the rule's reason.
+    for i, row in enumerate(acc):
+        if row is None or not row[1].startswith(".claude/rules/"):
+            continue
+        k, rel, why = row
+        imp = stub_import((t / rel).read_text(errors="replace"))
+        j = next((j for j, a in enumerate(acc) if imp and a and a[2].startswith(f"imported by {rel}")), None)
+        if j is not None:
+            root = " (resolved from the repo root)" if acc[j][2].endswith("(resolved from the repo root)") else ""
+            acc[i] = (k, acc[j][1], f"via {rel}{root}, {why}")
+            acc[j] = None
+    acc = [a for a in acc if a]
     return [(k, rel, str(line_count(t / rel)), why) for k, rel, why in acc + skips]
 
 

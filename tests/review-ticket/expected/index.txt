@@ -26,7 +26,7 @@ PRs per owner: acme: 3, other: 1. Rerun with --owner if some don't belong.
 Repos (code at the default branch; read each one's context before its code):
   acme/hotel-api  main @ <sha>  (worktree of <tmp>/workspace/hotel-api)
       code:    <tmp>/out/repos/acme-hotel-api/tree
-      context: <tmp>/out/repos/acme-hotel-api/context.md (6 always, 3 broad, 2 not applicable)
+      context: <tmp>/out/repos/acme-hotel-api/context.md (7 always, 2 broad, 2 not applicable)
   acme/web  main @ <sha>  (fresh shallow clone)
       code:    <tmp>/out/repos/acme-web/tree
       context: <tmp>/out/repos/acme-web/context.md (0 always, 0 broad, 0 not applicable)
