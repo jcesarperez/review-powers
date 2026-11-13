@@ -2,10 +2,12 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-11-13
+
 ### Added
 
 - Release flow: `main` holds only the latest release and `develop` the work in progress; `scripts/release.sh` publishes, and CI checks every push.
-- `review-ticket`: reviews a finished Jira ticket as one change, across all its subtasks, PRs and repos, and files the improvements you pick as one follow-up Task. Needs `gh`, `jq`, `git`, `acli` and Python 3.
+- `review-ticket` (beta): reviews a finished Jira ticket as one change, across all its subtasks, PRs and repos, and files the improvements you pick as one follow-up Task. Needs `gh`, `jq`, `git`, `acli` and Python 3.
 - `review-ticket` runs `gather.py` first: the ticket and its subtasks, every PR whose title or branch names one of their keys (searched as an exact phrase; mentions from unrelated owners dropped and counted), each PR's comment feeds, and per repo the code at its default branch in a detached worktree of your clone, or a fresh clone when you have none. `--cleanup` removes the trees. It rewrites `index.md` after every step, so a run in the background can be read as it fills; a repo still being set up shows as `PENDING`, so a killed run says how far it got. Code-coverage tables and "review has started" notices from bots collapse to one line each in `feeds.md`, counted in the index; their full text stays in the JSON.
 - `review-ticket` reads each repo with its own AI context, wherever you run it from: per repo, `gather.py` lists the `CLAUDE.md` and `AGENTS.md` at the root and above every touched file, the `.claude/rules` whose `paths:` match a touched file (globs as Claude Code documents them: `*.md` at any depth, `/*.md` at the root only, `*` within one folder), and what they import with `@`, each with why it applies. An import that only resolves from the repo root, as in rule stubs that import `@.agents/rules/…`, is listed and marked so. `context.md` splits them in two, each entry and group with its length in lines: always read (the root files, nested `CLAUDE.md`/`AGENTS.md`, and rules whose paths name a directory), and broad (rules for a file type or for every file), read when judging the repo's conventions. An import joins its importer's group, and a rule that only imports one file is listed as that file. Each rule's example match is a hand-written file when there is one, not a generated one.
 - `review-ticket` files the Task through `md2adf.sh`, which turns the Markdown draft into Atlassian Document Format so checkboxes stay checkboxes.
@@ -42,5 +44,6 @@
 - `review-pr-feedback`: gives a verdict on each review comment on your PR, fixes what you pick and replies to every comment.
 - Install with the skills CLI (project or global), as a Claude Code plugin, or by copying the folders.
 
+[1.2.0]: https://github.com/jcesarperez/review-powers/releases/tag/v1.2.0
 [1.1.0]: https://github.com/jcesarperez/review-powers/releases/tag/v1.1.0
 [1.0.0]: https://github.com/jcesarperez/review-powers/releases/tag/v1.0.0
