@@ -9,7 +9,8 @@
 
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT="$(cd "$HERE/../.." && pwd)"
+# Physical path: gather.py prints its own path resolved, and /var is a symlink on macOS.
+ROOT="$(cd "$HERE/../.." && pwd -P)"
 S="$ROOT/skills/review-ticket/scripts"
 UPDATE="${1:-}"
 
