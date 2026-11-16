@@ -202,8 +202,11 @@ One Task, unassigned:
   - **Discarded**: each with one line of why.
   - **Design calls**: what was decided.
 
-Show the Markdown draft. On confirmation, convert it to ADF (checkboxes need
-it), create, link, and report the key, URL and failures. `md2adf.sh` handles
+The user's choices are the go-ahead to write the draft: reply with the
+Markdown draft itself, not an offer to write one. Confirming the draft is the
+one stop before filing, since filing is what can't be taken back. On
+confirmation, convert it to ADF (checkboxes need it), create, link, and report
+the key, URL and failures. `md2adf.sh` handles
 headings, lists, checkboxes, code blocks, `code`, **bold** and links; write
 the draft in those.
 
