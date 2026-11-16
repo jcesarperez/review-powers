@@ -78,7 +78,7 @@ They only run when you call them. The agent never loads them on its own, so they
 
 - **`review-pr`** reads the PR, its diff, CI and comments through `gh`. It uses `git` to check the PR out in a separate worktree when the diff alone isn't enough. It reads the ticket through whatever Jira tool your agent has, if any.
 - **`review-pr-feedback`** reads the comments and posts the replies through `gh`. It works in your own checkout of the PR's branch, and uses `git` to check that it's at the PR's latest commit.
-- **`review-ticket`** reads Jira through `acli`, and the PRs through `gh`. It reads each repo's code and its own `CLAUDE.md`, `AGENTS.md` and rules from a worktree of your local clone, or a fresh clone when you have none. It also files the follow-up Task through `acli`, after a bash and `jq` script turns the Markdown into Jira's format.
+- **`review-ticket`** reads Jira through `acli`, and the PRs through `gh`. It reads each repo's code and its own `CLAUDE.md`, `AGENTS.md` and rules from a worktree of your local clone, or a fresh clone when you have none. It also files the follow-up Task through `acli`, after a bash and `jq` script turns the Markdown into Jira's format. Without these tools it still runs, slower: it reads the ticket and the PRs with whatever Jira and GitHub tools your agent has, and stops only if it can't read the ticket or the PRs' changes.
 
 ## What a report looks like
 

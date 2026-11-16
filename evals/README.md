@@ -142,6 +142,8 @@ to post; the graders read the fake `gh` log either way.
 | `review-pr-feedback/close-the-loop-no-trigger-gate` | 203 without `CONTRIBUTING.md` | The plan says the bot's trigger isn't documented instead of guessing one |
 | `review-pr-feedback/close-the-loop-no-trigger` | 203 without `CONTRIBUTING.md`, second turn | Nothing invented posted to the bot, the reply says its trigger is unknown, `maria-k` still re-requested |
 
+| `review-ticket/no-script` | 105's tickets, story HOT-530; `acli` shadowed by a stub that is "not found", so `gather.py` can't run | Tickets read through `tracker` and PR 105 through `gh` by hand, the per-room breakfast found against HOT-530's decision, the coverage names what it couldn't check |
+
 Every `review-pr` case also checks the repo afterwards, with file graders
 (there are no command graders): `.git/HEAD` still says `main`, and `file_exists`
 finds no branch under `.git/refs/heads` and no worktree under `.git/worktrees`

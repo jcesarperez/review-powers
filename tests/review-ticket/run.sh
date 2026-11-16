@@ -101,6 +101,13 @@ golden feeds-hotel-api-1.md "$OUT/prs/hotel-api-1/feeds.md"
 golden context-hotel-api.md "$OUT/repos/acme-hotel-api/context.md"
 golden context-web.md "$OUT/repos/acme-web/context.md"
 
+# layout.md is what a gather by hand must match too; check the script keeps it.
+assert "the gather matches layout.md" python3 -I "$HERE/check-layout.py" "$OUT"
+cp -R "$OUT" "$T/broken" && rm "$T/broken/prs/hotel-api-1/feeds.md"
+sed -i.bak "s|$OUT|$T/broken|g" "$T/broken/index.md"
+assert "a gather missing a feed fails the layout check" \
+  sh -c "! python3 -I '$HERE/check-layout.py' '$T/broken' >/dev/null"
+
 assert "hotel-api is read from a worktree of the local clone" \
   test "$(git -C "$CLONE" worktree list | grep -c "$OUT/repos/acme-hotel-api/tree")" = 1
 assert "the clone keeps its branch and uncommitted work" \

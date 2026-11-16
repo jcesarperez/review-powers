@@ -20,11 +20,18 @@ follow-up worth its cost, not a blocker.
 ## Gather before judging
 
 The request names only the ticket; what you need is spread across Jira,
-GitHub and several repos. Run
+GitHub and several repos: the ticket and every subtask, every PR whose title
+or branch names a key with its changes and review feeds, and per repo the code
+at its default branch with its AI context. Without the ticket or the PRs'
+changes there is nothing to review: stop and say what's missing. The rest you
+can do without, as long as the verdict says which.
+
+Where Python 3, `gh`, `git` and `acli` are installed and logged in, run
 `${CLAUDE_SKILL_DIR}/scripts/gather.py [--owner <owner>] [--repos-dir <dir>] <KEY> <scratchpad>/gather`.
-It writes the ticket, every subtask, every PR whose title or branch names a
-key, each PR's comment feeds, and per repo the code at its default branch,
-then prints an index of what it found, missed and failed.
+It collects all of it and prints an index of what it found, missed and
+failed. Otherwise collect it with the tools you have and lay it out as
+[layout.md](layout.md) describes, so the rest of this skill reads the same
+either way.
 
 A ticket with many PRs takes minutes, mostly network. Run it in the
 background, without piping or trimming its output, and read
@@ -42,7 +49,7 @@ Read from the index outward — review feeds make PR folders long. Look broadly:
 
 - **Jira** — the ticket, every subtask, their descriptions, ACs, comments,
   links and parent. If the script can't read the ticket, try any Jira tool
-  the environment has; if that fails too, stop. Descriptions record
+  the environment has. Descriptions record
   decisions — approach, split, scope cuts — so treat them as claims to check,
   not as the yardstick.
 - **PRs** — the index lists keys with no PR and PRs that only mention a key
@@ -69,7 +76,7 @@ index marks FAILED has unread code and context; say so.
 
 The code trees are detached worktrees of the user's clones (or fresh clones)
 in the scratchpad; never read the user's working tree. Remove them when the
-review ends with `gather.py --cleanup <dir>`. Read the code yourself rather
+review ends, the script's with `gather.py --cleanup <dir>`. Read the code yourself rather
 than through subagents: they start cold and re-read what you already have,
 and so far that has doubled the cost without making a run faster or its
 findings sharper.
@@ -206,4 +213,5 @@ acli jira workitem create -p <PROJECT> -t Task -s "<title>" --parent <PARENT> --
 acli jira workitem link create --out <NEW> --in <KEY> --type Relates --yes
 ```
 
-`<NEW>` is the `key` of the create output.
+`<NEW>` is the `key` of the create output. Without `acli`, use any Jira tool
+the environment has for the same Task and link.
