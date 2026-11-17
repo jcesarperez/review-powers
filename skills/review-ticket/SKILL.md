@@ -164,6 +164,16 @@ Plain conversation text, not a dialog. In order:
    When a guest picks a rate, the booking page shows what it includes (e.g. breakfast) and adds its price to the total.
    5 PRs in hotel-api and 2 in web, last merged 11-06, no feature flag.
    ```
+   Those sentences say what it does, not how. The findings will name pieces
+   (a resolver, an adapter, a panel) that a reader who doesn't know the code
+   can't place, and they decide better when they can see where each one sits.
+   So when the feature spans more than one repo or service, or moves through
+   a flow or states, add one `mermaid` diagram of it as built, the pieces your
+   findings name on it. Pick the shape that explains this feature: a flowchart
+   of the pieces, each labelled with the PRs that touched it; a
+   sequenceDiagram of one request; a stateDiagram of what it moves through. A
+   handful of nodes, named in the user's words. A change that stays inside
+   one component gets none.
 2. **Verdict**: your view of the ticket and what you covered — which feeds
    and which repos' context you read.
 3. **Findings**, numbered: only work to file (bugs, contract drift, AC gaps,
@@ -185,6 +195,13 @@ response, does it race with a worker or an in-flight request, does removing X
 change the result. Untraced, say so. A reframed premise means rerunning the
 reasoning. Do nothing until the user chooses. Never comment on PRs.
 
+End with one line offering the report as an HTML file, for reading the
+diagrams rendered or passing it on. On a yes, write `review-<KEY>.html` in
+the current directory, not the scratchpad, which gets cleaned: the whole
+gate in its order and tags, self-contained except for Mermaid from a CDN at a
+pinned version, readable in light and dark. Give its path. What happens to it
+next is the user's.
+
 ## File the follow-up
 
 One Task, unassigned:
@@ -194,7 +211,8 @@ One Task, unassigned:
 - **Description**: the whole review as the user shaped it, for an agent with
   none of this conversation. What was left out stays visible, so the next
   review doesn't raise it again. Sections, empty ones left out:
-  - **What it is**, **Verdict**: from the gate.
+  - **What it is**, **Verdict**: from the gate, the diagram as a `mermaid`
+    code block (Jira shows it as text; an agent reads it fine).
   - **To do**: per chosen finding, where (repo, `file:line`, PR), the problem
     as an observable case, and "done when". A fix is a candidate naming its
     assumption; the implementer chooses.

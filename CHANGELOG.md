@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- `review-ticket` shows how the feature works: when the opening sentences can't, "What it is" adds one Mermaid diagram of the feature as built (pieces with their PRs, a request, or states), carried into the follow-up Task as a code block. The gate ends offering the whole report as a standalone HTML file with the diagrams rendered.
+
 ### Changed
 
 - `review-ticket` no longer needs its script's tools. Where Python 3, `gh`, `git` and `acli` are set up it runs `gather.py` as before; otherwise it gathers the same with whatever Jira and GitHub tools the agent has (connectors, other CLIs, local clones) and lays it out as `layout.md` describes, so the review reads the same either way. The ticket and the PRs' changes are required; anything else missing is named in the verdict. The follow-up Task is filed with `acli` or any other Jira tool.
