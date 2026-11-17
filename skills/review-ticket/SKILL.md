@@ -166,8 +166,9 @@ Plain conversation text, not a dialog. In order:
    ```
    When the feature spans services, moves through a flow or states, or
    reshapes stored data, show it as built in `mermaid`, so the user can place
-   the pieces the findings name. One diagram per flow (a write and a read are
-   two). Pick each by what they need to see:
+   the pieces the findings name. One diagram per flow; a flow starts at its own
+   trigger (a request, a webhook, a job), so a write and a read are two, and so
+   are a call and its async callback. Pick each by what they need to see:
    - steps in order across pieces: `sequenceDiagram`
    - which piece does what: `flowchart`
    - a lifecycle: `stateDiagram-v2`
