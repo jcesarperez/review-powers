@@ -169,13 +169,19 @@ Plain conversation text, not a dialog. In order:
    can't place, and they decide better when they can see where each one sits.
    So when the feature spans more than one repo or service, or moves through
    a flow or states, add one `mermaid` diagram of it as built, the pieces your
-   findings name on it. Pick the shape that explains this feature: a flowchart
-   of the pieces; a sequenceDiagram of one request; a stateDiagram of what it
-   moves through. Arrows alone don't say what happens first, so number the
-   steps of a flow in order: `autonumber` in a sequenceDiagram, "1.", "2." on
-   a flowchart's edge labels. A handful of nodes, named in the user's words,
-   no PR numbers (the line above already says how it shipped). A change that
-   stays inside one component gets none.
+   findings name on it. Pick the shape by the question the user needs answered
+   to judge the findings:
+   - What happens, in what order? A request or action across pieces: a
+     `sequenceDiagram` with `autonumber`. A flowchart's arrows don't show
+     order, so a sequence drawn as one reads as a tangle.
+   - What is where? Which piece owns or does what, order beside the point (a
+     helper in two repos, a contract between front and back): a `flowchart`.
+   - What can it become? A thing with a lifecycle, findings on a state or
+     transition: a `stateDiagram-v2`.
+
+   A handful of nodes, named in the user's words, no PR numbers (the line
+   above already says how it shipped). A change that stays inside one
+   component gets none.
 2. **Verdict**: your view of the ticket and what you covered — which feeds
    and which repos' context you read.
 3. **Findings**, numbered: only work to file (bugs, contract drift, AC gaps,
