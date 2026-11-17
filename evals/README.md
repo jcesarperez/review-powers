@@ -143,7 +143,7 @@ to post; the graders read the fake `gh` log either way.
 | `review-pr-feedback/close-the-loop-no-trigger` | 203 without `CONTRIBUTING.md`, second turn | Nothing invented posted to the bot, the reply says its trigger is unknown, `maria-k` still re-requested |
 
 | `review-ticket/no-script` | 105's tickets, story HOT-530; `acli` shadowed by a stub that is "not found", so `gather.py` can't run | Tickets read through `tracker` and PR 105 through `gh` by hand, the per-room breakfast found against HOT-530's decision, the coverage names what it couldn't check |
-| `review-ticket/diagram-per-flow` | 107's tickets, story HOT-540 (async PMS confirm); no `acli`, as in `no-script` | Confirming and the webhook each get their own diagram; the new `pms_blocks` table shown with its link to quotes |
+| `review-ticket/diagram-per-flow` | 107's tickets, story HOT-540 (async PMS confirm); no `acli`, as in `no-script` | Confirming and the webhook each get their own diagram; no `erDiagram`, since the new `pms_blocks` table and `quotes` are only two entities |
 
 Every `review-pr` case also checks the repo afterwards, with file graders
 (there are no command graders): `.git/HEAD` still says `main`, and `file_exists`

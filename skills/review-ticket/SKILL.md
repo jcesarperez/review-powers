@@ -171,8 +171,8 @@ Plain conversation text, not a dialog. In order:
    - steps in order across pieces: `sequenceDiagram`
    - which piece does what: `flowchart`
    - a lifecycle: `stateDiagram-v2`
-   - tables or relations that changed: `erDiagram` of the touched tables as
-     they are now, new or changed columns noted
+   - tables or relations that changed, three entities or more: `erDiagram`
+     of the touched tables as they are now, new or changed columns noted
 
    A handful of nodes in the user's words, no PR numbers. None when it stays
    inside one component.

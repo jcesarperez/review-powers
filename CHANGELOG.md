@@ -4,7 +4,7 @@
 
 ### Added
 
-- `review-ticket` shows how the feature works: when the opening sentences can't, "What it is" adds Mermaid diagrams of the feature as built, one per flow (a sequence for what happens in order, a flowchart for what is where, a state diagram for a lifecycle, an ER diagram for tables that changed), carried into the follow-up Task as code blocks. The gate ends offering the whole report as a standalone HTML file with the diagrams rendered.
+- `review-ticket` shows how the feature works: when the opening sentences can't, "What it is" adds Mermaid diagrams of the feature as built, one per flow (a sequence for what happens in order, a flowchart for what is where, a state diagram for a lifecycle, an ER diagram when three or more tables are involved), carried into the follow-up Task as code blocks. The gate ends offering the whole report as a standalone HTML file with the diagrams rendered.
 
 ### Changed
 
