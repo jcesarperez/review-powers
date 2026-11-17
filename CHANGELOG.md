@@ -4,12 +4,12 @@
 
 ### Added
 
-- `review-ticket` shows how the feature works: when the opening sentences can't, "What it is" adds Mermaid diagrams of the feature as built, one per flow (a sequence for what happens in order, a flowchart for what is where, a state diagram for a lifecycle, an ER diagram when three or more tables are involved), carried into the follow-up Task as code blocks. The gate ends offering the whole report as a standalone HTML file with the diagrams rendered.
+- `review-ticket` shows how the feature works: when the opening sentences can't, "What it is" adds one Mermaid diagram per main action of the feature (a sequence, or a state diagram for a lifecycle), plus an ER diagram when the stored data that changed involves three entities or more, carried into the follow-up Task as code blocks. The gate ends offering the whole report as a standalone HTML file with the diagrams rendered.
 
 ### Changed
 
 - `review-ticket` no longer needs its script's tools. Where Python 3, `gh`, `git` and `acli` are set up it runs `gather.py` as before; otherwise it gathers the same with whatever Jira and GitHub tools the agent has (connectors, other CLIs, local clones) and lays it out as `layout.md` describes, so the review reads the same either way. The ticket and the PRs' changes are required; anything else missing is named in the verdict. The follow-up Task is filed with `acli` or any other Jira tool.
-- `tests/review-ticket/check-layout.py` checks a gather dir against `layout.md`; `run.sh` runs it on the script's output. New eval cases `review-ticket/no-script` and `review-ticket/diagram-per-flow` (PR 107 gains tickets HOT-540 and HOT-541).
+- `tests/review-ticket/check-layout.py` checks a gather dir against `layout.md`; `run.sh` runs it on the script's output. New eval case `review-ticket/no-script`.
 
 ### Fixed
 

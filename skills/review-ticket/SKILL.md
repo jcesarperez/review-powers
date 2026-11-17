@@ -164,19 +164,18 @@ Plain conversation text, not a dialog. In order:
    When a guest picks a rate, the booking page shows what it includes (e.g. breakfast) and adds its price to the total.
    5 PRs in hotel-api and 2 in web, last merged 11-06, no feature flag.
    ```
-   When the feature spans services, moves through a flow or states, or
-   reshapes stored data, show it as built in `mermaid`, so the user can place
-   the pieces the findings name. One diagram per flow; a flow starts at its own
-   trigger (a request, a webhook, a job), so a write and a read are two, and so
-   are a call and its async callback. Pick each by what they need to see:
-   - steps in order across pieces: `sequenceDiagram`
-   - which piece does what: `flowchart`
-   - a lifecycle: `stateDiagram-v2`
-   - tables or relations that changed, three entities or more: `erDiagram`
-     of the touched tables as they are now, new or changed columns noted
+   Then show what the feature does, one `mermaid` diagram per main action:
+   what a user or another system now does with it (calculate a price, create
+   an order, a webhook confirming), from its trigger to its answer, under one
+   line naming it. Actions done one after another still get one each: drawn
+   together, the reader can't tell where one ends. Usually a
+   `sequenceDiagram`; a `stateDiagram-v2` when the action is a lifecycle.
+   When the stored data that changed involves three entities or more, add an
+   `erDiagram` of them as they are now; fewer read fine in prose.
 
-   A handful of nodes in the user's words, no PR numbers. None when it stays
-   inside one component.
+   Keep only the pieces needed to follow each action, in the user's words, no
+   PR numbers, so the user can place the pieces the findings name. None when
+   it stays inside one component.
 2. **Verdict**: your view of the ticket and what you covered — which feeds
    and which repos' context you read.
 3. **Findings**, numbered: only work to file (bugs, contract drift, AC gaps,
