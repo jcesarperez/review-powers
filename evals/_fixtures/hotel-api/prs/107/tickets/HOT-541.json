@@ -1,0 +1,16 @@
+{
+  "key": "HOT-541",
+  "type": "Sub-task",
+  "status": "Done",
+  "summary": "Confirm quotes through the PMS's async mode",
+  "parent": "HOT-540",
+  "assignee": "emma-dev",
+  "description": "Acceptance criteria:\n- Confirming a quote requests its blocks in async mode, stores each block id and marks the quote `pending`.\n- The PMS's `block.created` webhook marks the quote `confirmed` once all its blocks exist.\n- Confirming no longer waits for the PMS.",
+  "comments": [
+    {
+      "author": "emma-dev",
+      "created": "2026-11-05",
+      "body": "PR is up: https://github.com/acme/hotel-api/pull/107"
+    }
+  ]
+}

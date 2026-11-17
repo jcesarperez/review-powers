@@ -9,7 +9,7 @@
 ### Changed
 
 - `review-ticket` no longer needs its script's tools. Where Python 3, `gh`, `git` and `acli` are set up it runs `gather.py` as before; otherwise it gathers the same with whatever Jira and GitHub tools the agent has (connectors, other CLIs, local clones) and lays it out as `layout.md` describes, so the review reads the same either way. The ticket and the PRs' changes are required; anything else missing is named in the verdict. The follow-up Task is filed with `acli` or any other Jira tool.
-- `tests/review-ticket/check-layout.py` checks a gather dir against `layout.md`; `run.sh` runs it on the script's output. New eval case `review-ticket/no-script`.
+- `tests/review-ticket/check-layout.py` checks a gather dir against `layout.md`; `run.sh` runs it on the script's output. New eval cases `review-ticket/no-script` and `review-ticket/diagram-per-flow` (PR 107 gains tickets HOT-540 and HOT-541).
 
 ### Fixed
 
