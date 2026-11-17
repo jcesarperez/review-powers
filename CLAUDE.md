@@ -12,6 +12,7 @@ Skills that turn AI code reviews into decision reports: the user reviews the rev
 
 - **Gate:** stopping for the user's decision is the point of every skill; every change keeps it.
 - **Judgement over rules:** a skill is prose that shapes judgement. Prefer a principle with its reason to a new rule.
+- **Short:** schematic beats prose: a trigger and a list, not paragraphs of reasoning. An edit that grows a section needs a reason.
 - **Evidence:** change a skill in response to an observed failure, and say how you'd check it: the eval cases it touches, or a real PR (or ticket) to try it on.
 - **Repeated corrections:** when the user corrects the same behaviour twice, it becomes an eval case, written even if not run.
 - **Shared parts:** each folder installs on its own, so some things are identical across skills; edit all of them. "Explain it to someone who doesn't know the code" up to "don't overwhelm the user" (all three); the order-and-tag paragraph of the gate (`review-pr` and `review-ticket` word for word; `review-pr-feedback` adds "not in the reviewer's order"); and `scripts/lib/feeds.sh`, the feed-fetching code that `fetch-pr.sh` and `feeds.sh` source (`review-pr` and `review-pr-feedback`; check with `cmp skills/review-pr/scripts/lib/feeds.sh skills/review-pr-feedback/scripts/lib/feeds.sh`). `review-ticket`'s `gather.py` has its own port of it: a change to how feeds are fetched or written belongs in both, or say why not.
