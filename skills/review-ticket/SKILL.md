@@ -164,12 +164,15 @@ Plain conversation text, not a dialog. In order:
    When a guest picks a rate, the booking page shows what it includes (e.g. breakfast) and adds its price to the total.
    5 PRs in hotel-api and 2 in web, last merged 11-06, no feature flag.
    ```
-   When the feature spans services or moves through a flow or states, add one
-   `mermaid` diagram of it as built, so the user can place the pieces the
-   findings name. Pick by what they need to see:
+   When the feature spans services, moves through a flow or states, or
+   reshapes stored data, show it as built in `mermaid`, so the user can place
+   the pieces the findings name. One diagram per flow (a write and a read are
+   two). Pick each by what they need to see:
    - steps in order across pieces: `sequenceDiagram`
    - which piece does what: `flowchart`
    - a lifecycle: `stateDiagram-v2`
+   - tables or relations that changed: `erDiagram` of the touched tables as
+     they are now, new or changed columns noted
 
    A handful of nodes in the user's words, no PR numbers. None when it stays
    inside one component.
@@ -210,7 +213,7 @@ One Task, unassigned:
 - **Description**: the whole review as the user shaped it, for an agent with
   none of this conversation. What was left out stays visible, so the next
   review doesn't raise it again. Sections, empty ones left out:
-  - **What it is**, **Verdict**: from the gate, the diagram as a `mermaid`
+  - **What it is**, **Verdict**: from the gate, each diagram as a `mermaid`
     code block (Jira shows it as text; an agent reads it fine).
   - **To do**: per chosen finding, where (repo, `file:line`, PR), the problem
     as an observable case, and "done when". A fix is a candidate naming its
