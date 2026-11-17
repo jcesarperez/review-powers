@@ -164,24 +164,15 @@ Plain conversation text, not a dialog. In order:
    When a guest picks a rate, the booking page shows what it includes (e.g. breakfast) and adds its price to the total.
    5 PRs in hotel-api and 2 in web, last merged 11-06, no feature flag.
    ```
-   Those sentences say what it does, not how. The findings will name pieces
-   (a resolver, an adapter, a panel) that a reader who doesn't know the code
-   can't place, and they decide better when they can see where each one sits.
-   So when the feature spans more than one repo or service, or moves through
-   a flow or states, add one `mermaid` diagram of it as built, the pieces your
-   findings name on it. Pick the shape by the question the user needs answered
-   to judge the findings:
-   - What happens, in what order? A request or action across pieces: a
-     `sequenceDiagram` with `autonumber`. A flowchart's arrows don't show
-     order, so a sequence drawn as one reads as a tangle.
-   - What is where? Which piece owns or does what, order beside the point (a
-     helper in two repos, a contract between front and back): a `flowchart`.
-   - What can it become? A thing with a lifecycle, findings on a state or
-     transition: a `stateDiagram-v2`.
+   When the feature spans services or moves through a flow or states, add one
+   `mermaid` diagram of it as built, so the user can place the pieces the
+   findings name. Pick by what they need to see:
+   - steps in order across pieces: `sequenceDiagram`
+   - which piece does what: `flowchart`
+   - a lifecycle: `stateDiagram-v2`
 
-   A handful of nodes, named in the user's words, no PR numbers (the line
-   above already says how it shipped). A change that stays inside one
-   component gets none.
+   A handful of nodes in the user's words, no PR numbers. None when it stays
+   inside one component.
 2. **Verdict**: your view of the ticket and what you covered — which feeds
    and which repos' context you read.
 3. **Findings**, numbered: only work to file (bugs, contract drift, AC gaps,
