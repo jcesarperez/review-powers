@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-11-19
+
 ### Added
 
 - `review-ticket` shows how the feature works: when the opening sentences can't, "What it is" adds one Mermaid diagram per main action of the feature (a sequence, or a state diagram for a lifecycle), plus an ER diagram when the stored data that changed involves three entities or more, carried into the follow-up Task as code blocks. The gate ends offering the whole report as a standalone HTML file with the diagrams rendered.
@@ -10,6 +12,7 @@
 
 - `review-ticket` no longer needs its script's tools. Where Python 3, `gh`, `git` and `acli` are set up it runs `gather.py` as before; otherwise it gathers the same with whatever Jira and GitHub tools the agent has (connectors, other CLIs, local clones) and lays it out as `layout.md` describes, so the review reads the same either way. The ticket and the PRs' changes are required; anything else missing is named in the verdict. The follow-up Task is filed with `acli` or any other Jira tool.
 - `tests/review-ticket/check-layout.py` checks a gather dir against `layout.md`; `run.sh` runs it on the script's output. New eval case `review-ticket/no-script`.
+- README: the example reports match what the skills produce now (finding tags, the ticket chain, the reply plan, the feature's diagrams and the next step), and all use an online shop.
 
 ### Fixed
 
@@ -57,6 +60,7 @@
 - `review-pr-feedback`: gives a verdict on each review comment on your PR, fixes what you pick and replies to every comment.
 - Install with the skills CLI (project or global), as a Claude Code plugin, or by copying the folders.
 
+[1.3.0]: https://github.com/jcesarperez/review-powers/releases/tag/v1.3.0
 [1.2.0]: https://github.com/jcesarperez/review-powers/releases/tag/v1.2.0
 [1.1.0]: https://github.com/jcesarperez/review-powers/releases/tag/v1.1.0
 [1.0.0]: https://github.com/jcesarperez/review-powers/releases/tag/v1.0.0
