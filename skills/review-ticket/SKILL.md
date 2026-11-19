@@ -8,106 +8,79 @@ description: "Review a completed Jira ticket as a whole — all its subtasks and
 
 # Review ticket
 
-If no ticket was given, ask which one.
+Flow: gather → report → discussion, if any → create the Task. If no ticket
+was given, ask which one.
 
-Every PR here was reviewed and merged; don't redo that. This review is for
-what no PR-level pass could see: the ticket as one change. Each PR can be
-right while the whole is wrong — a contract that drifted between backend and
-frontend, a helper built twice, scaffolding a later PR made obsolete, a deploy
-order nobody wrote down. It's already merged, so a finding is the case for a
+Every PR here was reviewed and merged; don't redo that. Review the ticket as
+one change, for what no PR-level pass could see: a contract that drifted
+between backend and frontend, a helper built twice, scaffolding a later PR made
+obsolete, a deploy order nobody wrote down. A finding is the case for a
 follow-up worth its cost, not a blocker.
 
-## Gather before judging
+## Gather
 
-The request names only the ticket; what you need is spread across Jira,
-GitHub and several repos: the ticket and every subtask, every PR whose title
-or branch names a key with its changes and review feeds, and per repo the code
-at its default branch with its AI context. Without the ticket or the PRs'
-changes there is nothing to review: stop and say what's missing. The rest you
-can do without, as long as the verdict says which.
+Needed: the ticket and every subtask; every PR whose title or branch names a
+key, with its changes and review feeds; per repo, the code at its default
+branch and its AI context. No ticket or no PR changes: stop and say what's
+missing. Anything else missing: name it in the verdict.
 
-Where Python 3, `gh`, `git` and `acli` are installed and logged in, run
-`${CLAUDE_SKILL_DIR}/scripts/gather.py [--owner <owner>] [--repos-dir <dir>] <KEY> <scratchpad>/gather`.
-It collects all of it and prints an index of what it found, missed and
-failed. Otherwise collect it with the tools you have and lay it out as
-[layout.md](layout.md) describes, so the rest of this skill reads the same
-either way.
+- **Script**: with Python 3, `gh`, `git` and `acli` logged in, run
+  `${CLAUDE_SKILL_DIR}/scripts/gather.py [--owner <owner>] [--repos-dir <dir>] <KEY> <scratchpad>/gather`
+  in the background, unpiped, and read `<scratchpad>/gather/index.md` as it
+  fills: a foreground run shows nothing and can time out silently. A repo
+  still PENDING once the run ended was not gathered: treat it as FAILED.
+  Don't ask for the options: `--owner` when the context names the GitHub user
+  or org, `--repos-dir` when it says where the clones live.
+- **No script**: collect it with your tools and lay it out as
+  [layout.md](layout.md) says.
+- **Read from the index outward**, broadly:
+  - Jira: descriptions, ACs, comments, links, parent. Their decisions
+    (approach, split, scope cuts) are claims to check, not the yardstick.
+  - PRs: decide which of the index's loose ones belong (keys with no PR, PRs
+    naming a key only in their body). A subtask with no PR: say so.
+  - Review threads: what was deferred or accepted as a trade-off, and whether
+    it landed.
+  - Repo docs: design docs, ADRs, `docs/` the change touched or should have.
+- **Each repo's rules**: its AI context won't load on its own. Its
+  `context.md` lists the files in two groups, because a long flat list goes
+  unread:
+  - always (root files, those scoped to the touched code): before judging
+    that repo's code;
+  - broad (per file type, every file): when judging its conventions.
 
-A ticket with many PRs takes minutes, mostly network. Run it in the
-background, without piping or trimming its output, and read
-`<scratchpad>/gather/index.md`, which fills step by step: a run held in the
-foreground shows nothing until it ends, and can hit the tool's time limit in
-silence while half the index is already readable. Until the run ends the
-index says it is still gathering; a repo marked PENDING when it has ended
-was not gathered, so treat it as FAILED. Don't ask the user
-for the options: pass `--owner` when the context already names the GitHub
-user or org (a CLAUDE.md, the repo you're in), and `--repos-dir` when it says
-where their clones live. Without `--owner` the script searches everything the
-user can see and the index says which owners it found.
-
-Read from the index outward — review feeds make PR folders long. Look broadly:
-
-- **Jira** — the ticket, every subtask, their descriptions, ACs, comments,
-  links and parent. If the script can't read the ticket, try any Jira tool
-  the environment has. Descriptions record
-  decisions — approach, split, scope cuts — so treat them as claims to check,
-  not as the yardstick.
-- **PRs** — the index lists keys with no PR and PRs that only mention a key
-  in their body; decide which belong. If a subtask has none, say so.
-- **Review threads** — what reviewers deferred ("follow-up", "later", "out
-  of scope") or accepted as a trade-off, and whether it ever landed.
-- **Repo docs** — design docs, ADRs, `docs/` the change touched or should have.
+  Follow what they point to when it bears on the change; nearest the code
+  wins. A FAILED repo: say its code and context went unread.
+- **Code trees** are detached worktrees in the scratchpad; never read the
+  user's working tree. Remove them at the end (`gather.py --cleanup <dir>`).
+- **No subagents**: they start cold and re-read what you have; so far that
+  doubled the cost without sharper findings.
 
 An unread feed and a clean one look identical in a report; say which you read.
 
-## Read each repo with its own rules
-
-You are not running inside these repos, so their AI context (CLAUDE.md,
-AGENTS.md, rules) won't load on its own, and it's what separates a deviation
-from the convention. For each repo the index points at a `context.md`: the
-files that apply to what the PRs touched, each with why and its length, and
-the rules that don't. They come in two groups, because a long flat list tends
-to get read not at all. Always read the first, the root files and the ones
-scoped to the touched code, before judging that repo's code. Read the broad
-group, rules for a file type or for every file, when you judge whether the
-code follows the repo's conventions. Follow what they point to when it bears
-on the change. Where two disagree, the one nearest the code wins. A repo the
-index marks FAILED has unread code and context; say so.
-
-The code trees are detached worktrees of the user's clones (or fresh clones)
-in the scratchpad; never read the user's working tree. Remove them when the
-review ends, the script's with `gather.py --cleanup <dir>`. Read the code yourself rather
-than through subagents: they start cold and re-read what you already have,
-and so far that has doubled the cost without making a run faster or its
-findings sharper.
-
 ## The questions
 
-Heaviest first. Most tickets answer a few; say which you looked at and found
-empty, as distinct from unexamined.
+Heaviest first. Say which came back empty, as distinct from unexamined.
 
-- **Does the whole deliver what was asked?** Map each AC to the code and test
-  that satisfy it. Gaps live at the seams between subtasks.
-- **Were the ticket's own decisions right?** The approach, the subtask split,
-  the scope cuts, the trade-offs accepted in review. With everything merged
-  you can see what the author couldn't: an approach that forced workarounds,
-  a split that put one concern in two places. Bring the evidence; the call is
-  the user's.
-- **Is there a real bug?** Especially across PRs — a state one side produces
+- **Does the whole deliver what was asked?** Each AC to the code and test
+  that satisfy it; gaps live at the seams between subtasks.
+- **Were the ticket's own decisions right?** Approach, split, scope cuts,
+  trade-offs accepted in review, now seen whole: an approach that forced
+  workarounds, one concern split in two. Bring evidence; the call is the
+  user's.
+- **Is there a real bug?** Especially across PRs: a state one side produces
   that the other doesn't handle. Show the path.
 - **Do contracts hold end to end?** What the backend sends versus what the
-  frontend reads; naming, nullability, enums that drifted; anything consumers
-  relied on.
-- **What happened at deploy, and what's still owed?** Migrations unsafe
-  while the old version served, cross-repo merge order, feature flags
-  awaiting rollout or cleanup.
+  frontend reads: naming, nullability, enums; what consumers relied on.
+- **What happened at deploy, and what's owed?** Migrations unsafe while the
+  old version served, cross-repo merge order, flags awaiting rollout or
+  cleanup.
 - **Which design calls should the user check by hand?** Data shape,
-  contracts, new abstractions, permissions, labels: anything that works as
-  built where the question is whether it should. Say where your judgment ends.
+  contracts, abstractions, permissions, labels: it works as built, but should
+  it? Say where your judgment ends.
 - **Can it be simpler now that it's whole?** Duplication, leftover
-  scaffolding, single-use abstractions, things the codebase already had.
-- **Does it follow the patterns here** — each repo's rules, and its own
-  consistency across subtasks?
+  scaffolding, single-use abstractions, what the codebase already had.
+- **Does it follow the patterns here?** Each repo's rules, and consistency
+  across subtasks.
 - **Are the ACs covered by tests at the right level?**
 - **What was left behind?** Deferred items, TODOs, dead code, stale docs,
   comment abuse.
@@ -149,37 +122,30 @@ supports:
 Usually one kind of view, sometimes two. Use your judgement and don't
 overwhelm the user.
 
-Carry the case into the follow-up Task: it doubles as the check that the
-change is done.
-
-## The gate
+## The report
 
 Plain conversation text, not a dialog. In order:
 
-1. **What it is**: linked title, then who uses it and what they can now do,
-   in a user's words, then how it shipped (PRs per repo, last merge, flag
-   state).
+1. **What it is**: linked title, who uses it and what they can now do in a
+   user's words, how it shipped (PRs per repo, last merge, flag state).
    ```text
    # [ABC-123](https://example.atlassian.net/browse/ABC-123): <title>
    When a guest picks a rate, the booking page shows what it includes (e.g. breakfast) and adds its price to the total.
    5 PRs in hotel-api and 2 in web, last merged 11-06, no feature flag.
    ```
-   Then show what the feature does, one `mermaid` diagram per main action:
-   what a user or another system now does with it (calculate a price, create
-   an order, a webhook confirming), from its trigger to its answer, under one
-   line naming it. Actions done one after another still get one each: drawn
-   together, the reader can't tell where one ends. Usually a
-   `sequenceDiagram`; a `stateDiagram-v2` when the action is a lifecycle.
-   When the stored data that changed involves three entities or more, add an
-   `erDiagram` of them as they are now; fewer read fine in prose.
-
-   Keep only the pieces needed to follow each action, in the user's words, no
-   PR numbers, so the user can place the pieces the findings name. None when
-   it stays inside one component.
-2. **Verdict**: your view of the ticket and what you covered — which feeds
-   and which repos' context you read.
+   Then one `mermaid` diagram per main action a user or system now does with
+   it (calculate a price, create an order, a webhook confirming), trigger to
+   answer, under a line naming it:
+   - one each, even when they run one after another, or the reader can't
+     tell where one ends;
+   - `sequenceDiagram`, or `stateDiagram-v2` for a lifecycle;
+   - an `erDiagram` of the changed stored data as it is now, only with three
+     entities or more;
+   - only the pieces needed to follow it, in the user's words, no PR numbers;
+     none when it stays inside one component.
+2. **Verdict**: your view, and which feeds and repos' context you read.
 3. **Findings**, numbered: only work to file (bugs, contract drift, AC gaps,
-   simplifications, leftovers). Each with evidence (`file:line` on the
+   simplifications, leftovers), each with evidence (`file:line` on the
    default branch, PR) and value against cost.
 4. **Owed, not code**: DEV checks, QA evidence, ACs to rewrite, sign-offs. No
    PR carries them, so a code Task closes without them.
@@ -191,44 +157,50 @@ Product, Tests, Design, Docs, Security, Deploy, Conventions, Localization,
 Scope, Nit, or a better word when none fits. One tag; when two fit, pick by what
 goes wrong if it's ignored.
 
-Every item gets a recommendation; close with what you'd file. Trace each
-recommendation through every layer it crosses: can the frontend read that
-response, does it race with a worker or an in-flight request, does removing X
-change the result. Untraced, say so. A reframed premise means rerunning the
-reasoning. Do nothing until the user chooses. Never comment on PRs.
+Every item gets a recommendation. Trace each through every layer it crosses
+(can the frontend read that response, does it race with a worker, does
+removing X change the result); untraced, say so. Never comment on PRs.
 
-End with one line offering the report as an HTML file, for reading the
-diagrams rendered or passing it on. On a yes, write `review-<KEY>.html` in
-the current directory, not the scratchpad, which gets cleaned: the whole
-gate in its order and tags, self-contained except for Mermaid from a CDN at a
-pinned version, readable in light and dark. Give its path. What happens to it
-next is the user's.
+Close with what you'd file, then the next step, in this order:
 
-## File the follow-up
+1. Create the Task.
+2. Generate the HTML report: `review-<KEY>.html` in the current directory,
+   not the scratchpad; the whole report in its order and tags,
+   self-contained except Mermaid from a CDN at a pinned version, light and
+   dark. Give its path, then offer 1 and 3 again.
+3. See the draft first.
+
+Then stop. File nothing until the user answers.
+
+## Discussion
+
+Optional. The user may question findings or change what gets filed. A
+reframed premise means rerunning the reasoning. Answer, then offer the next
+step again.
+
+## Create the Task
+
+When the user says to create it, create it: no draft, no second confirmation.
+Show the draft only if asked.
 
 One Task, unassigned:
 
 - **Project and parent**: the ticket's (no parent: ask).
 - **Title**: `Review <KEY>: <ticket title>`.
-- **Description**: the whole review as the user shaped it, for an agent with
-  none of this conversation. What was left out stays visible, so the next
-  review doesn't raise it again. Sections, empty ones left out:
-  - **What it is**, **Verdict**: from the gate, each diagram as a `mermaid`
-    code block (Jira shows it as text; an agent reads it fine).
-  - **To do**: per chosen finding, where (repo, `file:line`, PR), the problem
-    as an observable case, and "done when". A fix is a candidate naming its
-    assumption; the implementer chooses.
+- **Description**: the review as the user shaped it, for an agent with none
+  of this conversation. Sections, empty ones left out:
+  - **What it is**, **Verdict**: from the report, each diagram as a
+    `mermaid` code block.
+  - **To do**: per chosen finding, where (repo, `file:line`, PR), its case
+    from the report, which doubles as "done when". A fix is a candidate
+    naming its assumption; the implementer chooses.
   - **Owed, not code**: one `- [ ]` each.
-  - **Discarded**: each with one line of why.
+  - **Discarded**: each with one line of why, so the next review doesn't
+    raise it again.
   - **Design calls**: what was decided.
 
-The user's choices are the go-ahead to write the draft: reply with the
-Markdown draft itself, not an offer to write one. Confirming the draft is the
-one stop before filing, since filing is what can't be taken back. On
-confirmation, convert it to ADF (checkboxes need it), create, link, and report
-the key, URL and failures. `md2adf.sh` handles
-headings, lists, checkboxes, code blocks, `code`, **bold** and links; write
-the draft in those.
+Write it in what `md2adf.sh` handles (headings, lists, checkboxes, code
+blocks, `code`, **bold**, links), then:
 
 ```bash
 ${CLAUDE_SKILL_DIR}/scripts/md2adf.sh task.md task.json
@@ -236,5 +208,5 @@ acli jira workitem create -p <PROJECT> -t Task -s "<title>" --parent <PARENT> --
 acli jira workitem link create --out <NEW> --in <KEY> --type Relates --yes
 ```
 
-`<NEW>` is the `key` of the create output. Without `acli`, use any Jira tool
-the environment has for the same Task and link.
+`<NEW>` is the create output's `key`. Without `acli`, any Jira tool for the
+same Task and link. Report the key, URL and failures.

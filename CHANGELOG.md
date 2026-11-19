@@ -13,7 +13,7 @@
 
 ### Fixed
 
-- `review-ticket` shows the follow-up Task's draft as soon as the user has chosen, instead of stopping first to ask whether to show it; confirming the draft is the only stop before filing.
+- `review-ticket` no longer shows the follow-up Task's draft by default. Once the user has chosen, it asks one question, create the Task or see the draft first, with create first. When the user has already said to create it, it creates it without asking.
 
 ## [1.2.0] - 2026-11-13
 
