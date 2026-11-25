@@ -22,7 +22,7 @@ follow-up worth its cost, not a blocker.
 Needed: the ticket and every subtask; every PR whose title or branch names a
 key, with its changes and review feeds; per repo, the code at its default
 branch and its AI context. No ticket or no PR changes: stop and say what's
-missing. Anything else missing: name it in the verdict.
+missing. Anything else missing: name it in what you read.
 
 - **Script**: with Python 3, `gh`, `git` and `acli` logged in, run
   `${CLAUDE_SKILL_DIR}/scripts/gather.py [--owner <owner>] [--repos-dir <dir>] <KEY> <scratchpad>/gather`
@@ -150,7 +150,7 @@ Plain conversation text, not a dialog. In order:
      entities or more;
    - only the pieces needed to follow it, in the user's words, no PR numbers;
      none when it stays inside one component.
-2. **Verdict**: your view, and which feeds and repos' context you read.
+2. **What I read**: the feeds and repos' context, and what's missing.
 3. **Findings**, numbered: only work to file (bugs, contract drift, AC gaps,
    simplifications, leftovers), each with evidence (`file:line` on the
    default branch, PR) and value against cost.
@@ -164,11 +164,13 @@ Product, Tests, Design, Docs, Security, Deploy, Conventions, Localization,
 Scope, Nit, or a better word when none fits. One tag; when two fit, pick by what
 goes wrong if it's ignored.
 
-Every item gets a recommendation. Trace each through every layer it crosses
+Every item ends with what you'd do (`→ file`, `→ skip`). Trace each through every layer it crosses
 (can the frontend read that response, does it race with a worker, does
 removing X change the result); untraced, say so. Never comment on PRs.
 
-Close with what you'd file, then the next step, in this order:
+Close with **What I'd do**: your verdict in one sentence and what you'd file.
+A question still open goes there, not after it. Then the next step, in this
+order:
 
 1. Create the Task.
 2. Generate the HTML report: `review-<KEY>.html` in the current directory,
@@ -196,8 +198,8 @@ One Task, unassigned:
 - **Title**: `Review <KEY>: <ticket title>`.
 - **Description**: the review as the user shaped it, for an agent with none
   of this conversation. Sections, empty ones left out:
-  - **What it is**, **Verdict**: from the report, each diagram as a
-    `mermaid` code block.
+  - **What it is**, **Verdict** (its sentence in What I'd do): from the
+    report, each diagram as a `mermaid` code block.
   - **To do**: per chosen finding, where (repo, `file:line`, PR), its case
     from the report, which doubles as "done when". A fix is a candidate
     naming its assumption; the implementer chooses.

@@ -84,11 +84,12 @@ They only run when you call them. The agent never loads them on its own, so they
 
 Shortened and made-up, but in the shape the skills actually produce.
 
-Every finding leads with a concrete case, so you can judge it without opening the code. Then the evidence, what was verified and what wasn't, and a recommendation weighed against what it costs to fix. Each starts with a tag for what it's about (Bug, Deploy, Product, Design…), worst first, so you can stop reading anywhere.
+Every finding leads with a concrete case, so you can judge it without opening the code. Then the evidence, what was verified and what wasn't, and what it would do, weighed against what it costs to fix. The report closes with what it would do as a whole: a plan you can accept with "go ahead". Each starts with a tag for what it's about (Bug, Deploy, Product, Design…), worst first, so you can stop reading anywhere.
 
 **`review-pr`**
 
-> **My take: safe to merge once one thing is fixed. I'd request changes.**
+> **[Drop the old order status](https://github.com/example/shop-api/pull/130)**
+> Orders stop storing a separate status; it is now worked out from the shipments.
 >
 > **What I read:** the description, the ticket ABC-130 and its parent story, the full diff, CI (green), two earlier reviews, and every caller of `OrderRepository.Find`. Not stacked on another PR.
 >
@@ -100,7 +101,7 @@ Every finding leads with a concrete case, so you can judge it without opening th
 >    safe:            stop reading it now, drop it next release
 >    ```
 >    `migrations/0042_drop_status.sql:3`, `OrderRepository.cs:88`
->    **Recommendation:** request changes. Splitting it in two releases is cheap.
+>    → comment: splitting it in two releases is cheap.
 >
 > 2. **Product: refunds are now allowed on orders that haven't shipped.**
 >    ```
@@ -108,31 +109,37 @@ Every finding leads with a concrete case, so you can judge it without opening th
 >    now:     refunded, and the warehouse still ships it
 >    ```
 >    Neither the ticket nor its story says which is intended, so this is your call, not mine.
->    **Recommendation:** ask the author before merging. Cheap to check, expensive to get wrong.
+>    → comment, as a question to the author: cheap to check, expensive to get wrong.
 >
 > 3. **Design: `PriceFormatter` duplicates `Money.Format`.** `PriceFormatter.cs:12`, `Money.cs:40`
->    **Recommendation:** inline comment, not blocking.
+>    → comment, not blocking.
 >
-> Which ones do you want me to post?
+> **What I'd do:** request changes, for 1. Post 1 on `0042_drop_status.sql:3`, 2 on `RefundPolicy.cs:21` and 3 on `PriceFormatter.cs:12`, then submit as "Request changes". Say "go ahead", or change it.
 
 **`review-pr-feedback`**
 
-> **My take: all three comments hold, but only the first needs fixing now, and it's worse than the reviewer said.** I read the 3 inline comments, 2 review bodies and the conversation (empty). Your checkout is at the PR's latest commit.
+> **[Show each line's discount in the cart](https://github.com/example/web/pull/88)**
+> The cart shows the discount next to each line instead of only in the total.
+>
+> I read the 3 inline comments, 2 review bodies and the conversation (empty). Your checkout is at the PR's latest commit.
 >
 > 1. **Bug: removing a line keeps its discount (reviewer). Correct, and worse than stated.**
 >    - **Case:** Ana adds a shirt and a pair of shoes. One request returns the discounts for both and every line keeps that list. She removes the shoes, and the shirt still shows "Shoes -10%". The checkout charges it.
 >    - **Verified:** by reading `useCartPrices.ts:97`. I didn't run it, and no test covers removal.
 >    - **Counterpoint:** the reviewer's fix (ask the API which line each discount belongs to) is the right one, but it needs a backend change.
 >    - **Cost:** refetching on removal is about 20 lines and one test. The backend fix is a separate ticket.
->    - **Recommendation:** refetch in this PR, open a ticket for the backend.
+>    - → partly: refetch in this PR, open a ticket for the backend.
 >
 > 2. **Scope: move the cart into a shared store (bot). Right in principle, not in this PR.** It touches 9 files this PR doesn't.
->    **Recommendation:** decline and say why.
+>    → reject, saying why.
 >
 > 3. **Nit: `calc` should be `calculateTotal` (bot).** One rename, cheaper to do than to argue.
->    **Recommendation:** do it.
+>    → take.
 >
-> **The plan, if you agree:** fix 1 and 3 in a commit each, reply to all three, resolve 1 and 3, leave 2 open for the bot's answer, then re-request review from the reviewer and trigger the bot as `CONTRIBUTING.md` says.
+> **What I'd do:** all three hold, but only 1 needs fixing now, and it's worse than the reviewer said.
+> - Fix 1 and 3, a commit each.
+> - Reply to all three; resolve 1 and 3, leave 2 open.
+> - Re-request review from the reviewer; trigger the bot as `CONTRIBUTING.md` says.
 
 **`review-ticket`** (beta)
 
@@ -181,7 +188,7 @@ Every finding leads with a concrete case, so you can judge it without opening th
 >
 > </details>
 >
-> **My take: it works for the common case, but backend and frontend disagree on one field, and one AC has no code.** I read the ticket, its 5 subtasks, all 6 PRs with their reviews, and each repo's `CLAUDE.md` and rules.
+> **What I read:** the ticket, its 5 subtasks, all 6 PRs with their reviews, and each repo's `CLAUDE.md` and rules.
 >
 > 1. **Bug: an order with nothing to ship breaks the checkout page.**
 >    ```diff
@@ -192,13 +199,13 @@ Every finding leads with a concrete case, so you can judge it without opening th
 >    ```
 >    An order with only a gift card sends `null`, and `ShippingOptions.tsx:41` calls `.map` on it, so the page goes blank. Each PR's tests used physical products, so neither review could see it.
 >    `ShippingOptionsDto.cs:18` (shop-api#212), `ShippingOptions.tsx:41` (web#88)
->    **Recommendation:** send an empty list from the backend. One line and one test.
+>    → file: send an empty list from the backend. One line and one test.
 >
 > 2. **Product: AC 3 ("shipping is charged per package") has no code.** Subtask ABC-125 says ABC-127 covers it, and ABC-127 says the opposite. Today an order split into 3 packages shows the shipping cost once, and the total charges it 3 times.
->    **Recommendation:** file it. It's the one AC the customer sees wrong.
+>    → file: it's the one AC the customer sees wrong.
 >
 > 3. **Design: the shipping cost is calculated twice,** in shop-api (`ShippingPricing.cs`) and again in web (`useShippingTotal.ts`). They agree today, but a change to one will make them drift.
->    **Recommendation:** use the backend's total in web and delete the hook. About 40 lines removed.
+>    → skip for now: use the backend's total in web and delete the hook, about 40 lines removed.
 >
 > **Owed, not code:**
 > - The ticket asks for QA evidence on mobile; none is attached.
@@ -206,7 +213,7 @@ Every finding leads with a concrete case, so you can judge it without opening th
 > **Design calls:**
 > - The shipping method is per order, not per package: two packages in the same order can't ship differently. That matches the ticket, but check it's what product wants.
 >
-> **What I'd file:** 1 and 2, plus the QA check. 3 can wait.
+> **What I'd do:** it works for the common case, but backend and frontend disagree on one field, and one AC has no code. File 1 and 2, plus the QA check; 3 can wait.
 >
 > Tell me what to change, or pick the next step:
 > 1. Create the Task.

@@ -6,6 +6,8 @@
 
 - `review-pr` opens with the PR's linked title and one line on what it does, ends each finding with what it'd do (`→ comment`, `→ ignore`), and closes with "What I'd do": the verdict in one sentence and a plan the user can accept with "go ahead".
 - `review-pr-feedback` has the same shape: linked title and one line, a line on what it read, each finding ending with `→ take`, `→ reject` or `→ partly`, and "What I'd do" closing with the verdict and a plan of one line per step. An open decision goes in the plan, not in a second question.
+- `review-ticket` moves its verdict to the end: "What I read" comes second, each item ends with `→ file` or `→ skip`, and "What I'd do" closes with the verdict in one sentence and what it'd file, before the next step.
+- README: the example reports have the new shape.
 
 ### Fixed
 
