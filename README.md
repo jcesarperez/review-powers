@@ -199,13 +199,13 @@ Every finding leads with a concrete case, so you can judge it without opening th
 >    ```
 >    An order with only a gift card sends `null`, and `ShippingOptions.tsx:41` calls `.map` on it, so the page goes blank. Each PR's tests used physical products, so neither review could see it.
 >    `ShippingOptionsDto.cs:18` (shop-api#212), `ShippingOptions.tsx:41` (web#88)
->    → file: send an empty list from the backend. One line and one test.
+>    **Recommendation:** send an empty list from the backend. One line and one test.
 >
 > 2. **Product: AC 3 ("shipping is charged per package") has no code.** Subtask ABC-125 says ABC-127 covers it, and ABC-127 says the opposite. Today an order split into 3 packages shows the shipping cost once, and the total charges it 3 times.
->    → file: it's the one AC the customer sees wrong.
+>    **Recommendation:** file it. It's the one AC the customer sees wrong.
 >
 > 3. **Design: the shipping cost is calculated twice,** in shop-api (`ShippingPricing.cs`) and again in web (`useShippingTotal.ts`). They agree today, but a change to one will make them drift.
->    → skip for now: use the backend's total in web and delete the hook, about 40 lines removed.
+>    **Recommendation:** use the backend's total in web and delete the hook. About 40 lines removed.
 >
 > **Owed, not code:**
 > - The ticket asks for QA evidence on mobile; none is attached.

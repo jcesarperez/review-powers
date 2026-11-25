@@ -164,7 +164,7 @@ Product, Tests, Design, Docs, Security, Deploy, Conventions, Localization,
 Scope, Nit, or a better word when none fits. One tag; when two fit, pick by what
 goes wrong if it's ignored.
 
-Every item ends with what you'd do (`→ file`, `→ skip`). Trace each through every layer it crosses
+Every item gets a recommendation. Trace each through every layer it crosses
 (can the frontend read that response, does it race with a worker, does
 removing X change the result); untraced, say so. Never comment on PRs.
 
