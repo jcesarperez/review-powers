@@ -156,7 +156,8 @@ goes wrong if it's ignored.
 
 Close with **What I'd do**: your verdict in one sentence (approve, comment or
 request changes), then the plan the user can accept with "go ahead": which
-findings to post, where, and the review to submit. Do nothing until they answer.
+findings to post, where, and the review to submit. A question still open goes
+in the plan, not after it. Do nothing until they answer.
 
 Concise, kind and non-pedantic govern how a comment is written, never whether
 it is raised. An inline comment's line is part of the comment, so verify where

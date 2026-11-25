@@ -89,8 +89,10 @@ overwhelm the user.
 
 ## The gate
 
-Open with your overall verdict: which findings hold and which one matters
-most. Present the verdicts in the conversation and **stop**.
+Open with the PR's linked title as a heading and, under it, one line on what
+the change does, in a user's words. Then one line on what you read: the feeds,
+and whether your tree is the PR's head. Present the verdicts in the
+conversation and **stop**.
 
 Order findings by what ignoring each would cost, worst first, not in the
 reviewer's order: the user may stop reading anywhere. Start each with a tag
@@ -100,14 +102,18 @@ when two fit, pick by what goes wrong if it's ignored. Nothing is edited,
 committed, pushed, replied to, resolved or re-requested before the user answers.
 
 Give them the argument, not just the conclusion: the strongest
-counterpoint, a value-versus-cost read, your recommendation. The user's call
+counterpoint and a value-versus-cost read, ending on what you'd do
+(`→ take`, `→ reject`, `→ partly`). The user's call
 on which findings to take is the decision this skill exists to serve — a run that fixes everything the
 reviewer asked has skipped its own point.
 
-End on the plan one answer approves, through to the re-review: the fixes, the
-replies, the threads you will resolve, and who you will ask to look again and
-how. A go-ahead covers what the plan names, and a question left after it tends
-to go unanswered.
+Close with **What I'd do**: your verdict in one sentence (which findings hold,
+which matters most), then the plan one answer approves, through to the
+re-review: the fixes, the replies, the threads you will resolve, and who you
+will ask to look again and how. One line per step, no reason already given
+above. A decision still open goes in the plan, not in a question after it: a
+go-ahead covers what the plan names, and a second question tends to go
+unanswered.
 
 Their answer can reframe a premise ("we're pre-GA, deleting data is fine") rather
 than accept or reject. That is a new fact — rerun the reasoning under it, since
