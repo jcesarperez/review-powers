@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-11-25
+
 ### Changed
 
 - `review-pr` opens with the PR's linked title and one line on what it does, ends each finding with what it'd do (`→ comment`, `→ ignore`), and closes with "What I'd do": the verdict in one sentence and a plan the user can accept with "go ahead".
@@ -12,7 +14,7 @@
 
 ### Fixed
 
-- All three skills again show a case that unfolds in steps (a rollout, retries, a race) as a few lines in `text`. Since 1.1 reports had dropped views almost entirely.
+- All three skills again show a case that unfolds in steps (a rollout, retries, a race) as a few lines in `text`. Since 1.1, reports had dropped views almost entirely.
 
 ## [1.3.0] - 2026-11-19
 
@@ -72,6 +74,7 @@
 - `review-pr-feedback`: gives a verdict on each review comment on your PR, fixes what you pick and replies to every comment.
 - Install with the skills CLI (project or global), as a Claude Code plugin, or by copying the folders.
 
+[1.4.0]: https://github.com/jcesarperez/review-powers/releases/tag/v1.4.0
 [1.3.0]: https://github.com/jcesarperez/review-powers/releases/tag/v1.3.0
 [1.2.0]: https://github.com/jcesarperez/review-powers/releases/tag/v1.2.0
 [1.1.0]: https://github.com/jcesarperez/review-powers/releases/tag/v1.1.0
