@@ -153,7 +153,8 @@ Plain conversation text, not a dialog. In order:
 2. **What I read**: the feeds and repos' context, and what's missing.
 3. **Findings**, numbered: only work to file (bugs, contract drift, AC gaps,
    simplifications, leftovers), each with evidence (`file:line` on the
-   default branch, PR) and value against cost.
+   default branch, PR) and value against cost. Contract drift: the shape each
+   side expects, as a `diff`.
 4. **Owed, not code**: DEV checks, QA evidence, ACs to rewrite, sign-offs. No
    PR carries them, so a code Task closes without them.
 5. **Design calls**, unnumbered: the call and its concrete case.
