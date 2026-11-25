@@ -101,7 +101,14 @@ would have to look up gets a few words or stays out.
 **Lead each finding with one concrete case**, then why it happens.
 An abstract point needs numbers: "3 shirts in M + 1 in L, merged by
 product → the warehouse ships 4 in M". A finding that is already one input
-and one wrong result is its own case, and a sentence is enough.
+and one wrong result is its own case, and a sentence is enough. A case that unfolds in steps
+(a rollout, retries, a race) gets a few lines in `text`:
+
+```text
+Old pods still serve while the migration drops `quote.status`.
+  during rollout:  old code selects it → 500 on every quote read
+  safe:            stop reading it now, drop it next release
+```
 
 Add a view only where prose would leave the reader rebuilding a shape or a
 flow. Pick the smallest one that makes the point, next to the sentence it
@@ -133,19 +140,23 @@ drop the explanation.
 
 ## The gate
 
-Open with your verdict, then say what you covered — which feeds you read,
-and which questions came back empty versus unexamined.
+Open with the PR's linked title as a heading and, under it, one line on what
+the change does, in a user's words. Then say what you covered — which feeds
+you read, and which questions came back empty versus unexamined.
 
 Then a numbered list of findings the user can act on — ignore, or leave as an
-inline PR comment on its `file:line` — each with your own recommendation,
-weighed against its cost to fix, including whether the set warrants a plain
-comment or a request for changes. Do nothing until they choose.
+inline PR comment on its `file:line` — each ending with what you'd do with it
+(`→ comment`, `→ ignore`), weighed against its cost to fix.
 
 Order findings by what ignoring each would cost, worst first: the user may
 stop reading anywhere. Start each with a tag for what it is about: Bug,
 Product, Tests, Design, Docs, Security, Deploy, Conventions, Localization,
 Scope, Nit, or a better word when none fits. One tag; when two fit, pick by what
 goes wrong if it's ignored.
+
+Close with **What I'd do**: your verdict in one sentence (approve, comment or
+request changes), then the plan the user can accept with "go ahead": which
+findings to post, where, and the review to submit. Do nothing until they answer.
 
 Concise, kind and non-pedantic govern how a comment is written, never whether
 it is raised. An inline comment's line is part of the comment, so verify where

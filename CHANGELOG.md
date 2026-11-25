@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+### Changed
+
+- `review-pr` opens with the PR's linked title and one line on what it does, ends each finding with what it'd do (`→ comment`, `→ ignore`), and closes with "What I'd do": the verdict in one sentence and a plan the user can accept with "go ahead".
+
+### Fixed
+
+- All three skills again show a case that unfolds in steps (a rollout, retries, a race) as a few lines in `text`. Since 1.1 reports had dropped views almost entirely.
+
 ## [1.3.0] - 2026-11-19
 
 ### Added

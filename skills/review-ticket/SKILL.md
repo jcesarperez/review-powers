@@ -95,7 +95,14 @@ would have to look up gets a few words or stays out.
 **Lead each finding with one concrete case**, then why it happens.
 An abstract point needs numbers: "3 shirts in M + 1 in L, merged by
 product → the warehouse ships 4 in M". A finding that is already one input
-and one wrong result is its own case, and a sentence is enough.
+and one wrong result is its own case, and a sentence is enough. A case that unfolds in steps
+(a rollout, retries, a race) gets a few lines in `text`:
+
+```text
+Old pods still serve while the migration drops `quote.status`.
+  during rollout:  old code selects it → 500 on every quote read
+  safe:            stop reading it now, drop it next release
+```
 
 Add a view only where prose would leave the reader rebuilding a shape or a
 flow. Pick the smallest one that makes the point, next to the sentence it
