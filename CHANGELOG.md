@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-26
+
+### Added
+
+- `review-pr` shows one Mermaid diagram under the line on what the PR does, when it applies: an ER diagram of the tables a migration creates or changes, otherwise a sequence diagram when the PR adds or changes a flow across three services or components or more. Never more than one.
+
+### Changed
+
+- `review-pr` findings are a headline and three bullets (`Case`, `Fix`, `Cost`), the last ending in what it'd do with its value (`→ comment (what it prevents)`, `→ ignore (why it's safe to skip)`), instead of a paragraph.
+- `review-pr` "What I'd do" is the verdict and one bullet per step; an open question is the last bullet.
+- `review-pr` no longer lists a sequence diagram among the per-finding views; the one under the title replaces it.
+
 ## [1.4.0] - 2026-11-25
 
 ### Changed
