@@ -157,7 +157,7 @@ bullets, not a paragraph:
 1. **Design** — <the problem in one sentence> (`file:line`)
    - Case: <the real input or situation where it goes wrong>
    - Fix: <what to change>
-   - Cost: <how big the fix is> → comment (<the value: what it prevents>)
+   - Cost: <how big the fix is> → comment (<what it prevents>) | ignore (<why it's safe to skip>)
 ```
 The last bullet weighs the cost against the value and ends in what you'd do
 (`→ comment`, `→ ignore`). Background the ticket or author already knows is one clause or cut.
