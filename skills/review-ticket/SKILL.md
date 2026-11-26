@@ -170,8 +170,8 @@ Every item gets a recommendation. Trace each through every layer it crosses
 removing X change the result); untraced, say so. Never comment on PRs.
 
 Close with **What I'd do**: your verdict in one sentence and what you'd file.
-A question still open goes there, not after it. Then the next step, in this
-order:
+End it with one line inviting a change: "Go ahead, or tell me what to file
+instead (by finding number)." Then the next step, in this order:
 
 1. Create the Task.
 2. Generate the HTML report: `review-<KEY>.html` in the current directory,

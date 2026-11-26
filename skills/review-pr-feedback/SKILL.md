@@ -110,10 +110,9 @@ reviewer asked has skipped its own point.
 Close with **What I'd do**: your verdict in one sentence (which findings hold,
 which matters most), then the plan one answer approves, through to the
 re-review: the fixes, the replies, the threads you will resolve, and who you
-will ask to look again and how. One line per step, no reason already given
-above. A decision still open goes in the plan, not in a question after it: a
-go-ahead covers what the plan names, and a second question tends to go
-unanswered.
+will ask to look again and how. One bullet per step, no reason already given
+above. End with one line inviting a change: "Go ahead, or tell me what to do
+instead (by finding number)."
 
 Their answer can reframe a premise ("we're pre-GA, deleting data is fine") rather
 than accept or reject. That is a new fact — rerun the reasoning under it, since

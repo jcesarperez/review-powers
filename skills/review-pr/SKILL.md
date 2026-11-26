@@ -171,8 +171,8 @@ goes wrong if it's ignored.
 Close with **What I'd do**: your verdict in one sentence (approve, comment or
 request changes), then the plan the user can accept with "go ahead", one
 bullet per step: which findings to post and where, which to skip, the review
-to submit. A question still open is the last bullet, not a paragraph after
-it. Do nothing until they answer.
+to submit. End with one line inviting a change: "Go ahead, or tell me what to
+post instead (by finding number)." Do nothing until they answer.
 
 Concise, kind and non-pedantic govern how a comment is written, never whether
 it is raised. An inline comment's line is part of the comment, so verify where
