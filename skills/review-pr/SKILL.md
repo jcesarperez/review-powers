@@ -141,8 +141,8 @@ drop the explanation.
 Open with the PR's linked title as a heading and, under it, one line on what
 the change does, in a user's words. Then, when it applies, one `mermaid`
 diagram, never more:
-- an `erDiagram` of the stored data as it is now, when the PR migrates it and
-  three entities or more are involved;
+- an `erDiagram` of the tables the PR creates or changes, as they are now,
+  when it has a migration;
 - otherwise a `sequenceDiagram`, when the PR adds or changes a flow across
   three services or components or more;
 - only the pieces needed to follow it, in the user's words; none otherwise.
@@ -151,8 +151,16 @@ Then say what you covered — which feeds
 you read, and which questions came back empty versus unexamined.
 
 Then a numbered list of findings the user can act on — ignore, or leave as an
-inline PR comment on its `file:line` — each ending with what you'd do with it
-(`→ comment`, `→ ignore`), weighed against its cost to fix.
+inline PR comment on its `file:line`. Each is a headline and up to three
+bullets, not a paragraph:
+```text
+1. **Design** — <the problem in one sentence> (`file:line`)
+   - Case: <the real input or situation where it goes wrong>
+   - Fix: <what to change>
+   - Cost: <how big the fix is> → comment (<the value: what it prevents>)
+```
+The last bullet weighs the cost against the value and ends in what you'd do
+(`→ comment`, `→ ignore`). Background the ticket or author already knows is one clause or cut.
 
 Order findings by what ignoring each would cost, worst first: the user may
 stop reading anywhere. Start each with a tag for what it is about: Bug,
@@ -161,9 +169,10 @@ Scope, Nit, or a better word when none fits. One tag; when two fit, pick by what
 goes wrong if it's ignored.
 
 Close with **What I'd do**: your verdict in one sentence (approve, comment or
-request changes), then the plan the user can accept with "go ahead": which
-findings to post, where, and the review to submit. A question still open goes
-in the plan, not after it. Do nothing until they answer.
+request changes), then the plan the user can accept with "go ahead", one
+bullet per step: which findings to post and where, which to skip, the review
+to submit. A question still open is the last bullet, not a paragraph after
+it. Do nothing until they answer.
 
 Concise, kind and non-pedantic govern how a comment is written, never whether
 it is raised. An inline comment's line is part of the comment, so verify where
