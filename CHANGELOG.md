@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-11-26
+
+### Changed
+
+- `review-pr`, `review-pr-feedback` and `review-ticket` no longer leave an open question in "What I'd do": the plan is the recommendation and the answer is the decision. Each plan ends with one line inviting a change by finding number ("Go ahead, or tell me what to post instead").
+- `review-pr-feedback`'s plan is one bullet per step.
+
 ## [1.5.0] - 2026-11-26
 
 ### Added
