@@ -128,8 +128,6 @@ supports:
 
 - Changed control flow as a call tree or pseudocode in `text`, the new step
   marked.
-- An interaction across services as a `mermaid` sequenceDiagram, when prose
-  would need more than two sentences.
 - Which files changed as a shallow file tree, only when that matters.
 
 Usually one kind of view, sometimes two. Use your judgement and don't
@@ -141,7 +139,15 @@ drop the explanation.
 ## The gate
 
 Open with the PR's linked title as a heading and, under it, one line on what
-the change does, in a user's words. Then say what you covered — which feeds
+the change does, in a user's words. Then, when it applies, one `mermaid`
+diagram, never more:
+- an `erDiagram` of the stored data as it is now, when the PR migrates it and
+  three entities or more are involved;
+- otherwise a `sequenceDiagram`, when the PR adds or changes a flow across
+  three services or components or more;
+- only the pieces needed to follow it, in the user's words; none otherwise.
+
+Then say what you covered — which feeds
 you read, and which questions came back empty versus unexamined.
 
 Then a numbered list of findings the user can act on — ignore, or leave as an
